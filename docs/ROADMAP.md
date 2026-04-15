@@ -137,7 +137,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `ads/caps/page.tsx` (F021): 노출/클릭 한도 폼
   - `ads/logs/page.tsx` (F022): 로그 조회 전용 (필터 + 목록)
 
-- **Task 008: 고객 지원 UI 구현 (더미)**
+- ✅ **Task 008: 고객 지원 UI 구현 (더미)** - 완료
   - `support/cs/page.tsx` (F023): CS 티켓 목록 + 상세(내용/처리결과 입력)
   - `support/reviews/page.tsx` (F024): 리뷰 목록 + CEO 답변 폼
   - 전체 24개 페이지 MDI 탭 열림/닫힘/전환 검증
