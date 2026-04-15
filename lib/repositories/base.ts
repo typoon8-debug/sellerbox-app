@@ -58,6 +58,20 @@ export abstract class BaseRepository<T extends TableName> {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
+    /**
+     * ────────────────────────────────────────────────────────────────────
+     * 컬럼 최적화 가이드
+     * 기본값 "*"는 모든 컬럼을 가져오므로 불필요한 대용량 컬럼이 포함될 수 있음.
+     * 도메인별 Repository에서 paginate()를 오버라이드하거나,
+     * 아래와 같이 this.qb.select("col1, col2, col3", { count: "exact" }) 형태로
+     * 필요 컬럼만 명시하면 네트워크 전송량과 파싱 비용을 줄일 수 있음.
+     *
+     * 예시 (StoreRepository):
+     *   this.qb.select("store_id, name, status, created_at", { count: "exact" })
+     *
+     * 주의: count: "exact" 옵션은 항상 유지해야 pagination이 정상 동작함.
+     * ────────────────────────────────────────────────────────────────────
+     */
     let query = this.qb.select("*", { count: "exact" }).range(from, to);
 
     if (search) {

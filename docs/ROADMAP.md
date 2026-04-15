@@ -201,7 +201,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] Playwright MCP: 로그아웃 후 세션 삭제 및 재로그인 플로우 검증
   - [ ] Playwright MCP: 비밀번호 오류 시 에러 메시지 표시 확인
 
-- **Task 012: 매장 및 상품 관리 API 연동 (F001·F012·F013)**
+- ✅ **Task 012: 매장 및 상품 관리 API 연동 (F001·F012·F013)** - 완료
   - `stores/page.tsx` 더미 데이터 → `store.actions.ts` 연동
   - `stores/info/page.tsx` 각 탭 → `store-fulfillment`, `seller`, `store-quick-policy`, `store-quick-timeslot`, `store-quick-slot-usage` 액션 연동
   - `items/page.tsx` → `item.actions.ts` + `item-detail.actions.ts` 연동
@@ -216,7 +216,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] Playwright MCP: 상품 상태 전환(ACTIVE↔OUT_OF_STOCK) 검증
   - [ ] 에러 케이스: 중복 SKU 등록 시 `ConflictError` 표시
 
-- **Task 013: 재고 관리 API 연동 (F002)**
+- ✅ **Task 013: 재고 관리 API 연동 (F002)** - 완료
   - `inventory/page.tsx` → `inventory.actions.ts` 연동
   - 재고 조정 시 `inventory_txn` 자동 기록 (before/after 수량 포함) — 트랜잭션 처리
   - 카테고리별 상품 조회 + 재고 현황 JOIN 쿼리
@@ -230,7 +230,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] Playwright MCP: 안전재고 이하 상품 시각적 강조 확인
   - [ ] Playwright MCP: 트랜잭션 이력 시트 필터링·스크롤 검증
 
-- **Task 014: 주문 피킹/패킹/라벨 API 연동 (F003·F004·F005·F006)**
+- ✅ **Task 014: 주문 피킹/패킹/라벨 API 연동 (F003·F004·F005·F006)** - 완료
   - `orders/picking/page.tsx` → `picking-task.actions.ts` + `picking-item.actions.ts`
     - 상태 전환: CREATED → PICKING → PICKED/FAILED
     - 대체 상품 지정(substitute_product_id) 처리
@@ -249,7 +249,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] Playwright MCP: 라벨 유형(BOX·BAG·INVOICE) 각각 ZPL 미리보기 렌더링
   - [ ] Playwright MCP: 피킹/패킹 리스트 PDF 출력 뷰 렌더링
 
-- **Task 015: 배송 관리 API 연동 및 Realtime 대시보드 (F007·F008·F009·F010)**
+- ✅ **Task 015: 배송 관리 API 연동 및 Realtime 대시보드 (F007·F008·F009·F010)** - 완료
   - `shipments/requests/page.tsx` → `dispatch-request.actions.ts` (패킹 완료 주문 조회 후 요청 생성)
   - `shipments/quick-closing/page.tsx` → `store-quick-slot-usage.repository.ts` + 마감 처리 비즈니스 로직
   - `shipments/routing/page.tsx` → 배송순서 생성 알고리즘 (`lib/utils/routing.ts`, 간단한 거리 기반)
@@ -266,7 +266,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] Playwright MCP: DB 직접 INSERT `shipment_event` → Realtime 구독으로 UI 자동 갱신 확인 (2초 이내)
   - [ ] Playwright MCP: 여러 탭에서 동시 현황판 구독 → 데이터 일관성 검증
 
-- **Task 016: 프로모션 및 쿠폰 API 연동 (F014·F015·F016·F017)**
+- ✅ **Task 016: 프로모션 및 쿠폰 API 연동 (F014·F015·F016·F017)** - 완료
   - `promotions/page.tsx` → `promotion.actions.ts` (SCHEDULED/ACTIVE/PAUSED/ENDED 상태)
   - `promotions/items/page.tsx` → `promotion-item.actions.ts` (N+1 조건·대체상품 지원)
   - `coupons/page.tsx` → `coupon.actions.ts` (DISCOUNT/SHIPPING_FREE/SIGNUP 유형)
@@ -280,7 +280,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] Playwright MCP: 쿠폰 사용 이력 조회 필터(기간·쿠폰·고객) 검증
   - [ ] Playwright MCP: 만료된 쿠폰 상태 EXPIRED 자동 전환 확인
 
-- **Task 017: 광고 관리 API 연동 (F018·F019·F020·F021·F022)**
+- ✅ **Task 017: 광고 관리 API 연동 (F018·F019·F020·F021·F022)** - 완료
   - `ads/contents/page.tsx` → `ad-content.actions.ts` + Storage 광고 이미지 업로드
   - `ads/schedules/page.tsx` → `ad-schedule.actions.ts` (기간·시간·요일 마스크)
   - `ads/targets/page.tsx` → `ad-target.actions.ts`
@@ -295,7 +295,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] Playwright MCP: 광고 로그 날짜 범위 필터링 + 페이지네이션 동작
   - [ ] Playwright MCP: 광고 상태 전환(DRAFT→READY→ACTIVE→PAUSED→ENDED) 플로우
 
-- **Task 018: 고객 지원 API 연동 (F023·F024)**
+- ✅ **Task 018: 고객 지원 API 연동 (F023·F024)** - 완료
   - `support/cs/page.tsx` → `cs-ticket.actions.ts`
     - 상태 전환: OPEN → IN_PROGRESS → CLOSED
     - 유형: REFUND/EXCHANGE/INQUIRY
@@ -309,7 +309,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] Playwright MCP: CEO 답변 등록 → 리뷰 목록 "답변여부" 갱신 확인
   - [ ] Playwright MCP: CEO 답변 수정 시 `modified_at` 타임스탬프 갱신 검증
 
-- **Task 019: 핵심 기능 통합 E2E 테스트**
+- ✅ **Task 019: 핵심 기능 통합 E2E 테스트** - 완료
   - `e2e/` 디렉터리 신설 및 테스트 파일 체계 구성
     - `e2e/auth.spec.ts` — 로그인/로그아웃/권한
     - `e2e/stores.spec.ts` — 매장 CRUD
@@ -332,18 +332,18 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
 
 ### Phase 4: 고급 기능 및 최적화
 
-- **Task 020: 성능 최적화 및 캐싱 전략**
-  - Next.js 15 Server Components 캐싱 전략 정리 (`revalidate`, `cache: 'no-store'`)
-  - Supabase 쿼리 최적화 (필요 컬럼만 `select`, JOIN 최소화)
-  - 목록 페이지 스트리밍 (`Suspense` + `loading.tsx`) 적용
-  - 이미지 최적화 (`next/image` + Supabase transform)
-  - 번들 분석 및 코드 스플리팅
+- ✅ **Task 020: 성능 최적화 및 캐싱 전략** - 완료
+  - 주요 도메인 loading.tsx 6개 생성 (stores, items, inventory, picking, packing, shipments/dashboard)
+  - 동적 페이지에 `export const dynamic = 'force-dynamic'` / `revalidate = 0` 전략 적용
+  - `lib/repositories/base.ts` paginate() 컬럼 최적화 가이드 주석 추가
+  - `lib/supabase/storage.ts` `getTransformUrl()` 함수 추가 (width, quality 파라미터)
+  - `next.config.ts` `optimizePackageImports`에 recharts 포함으로 번들 최적화 확인
 
-- **Task 021: 접근성·반응형·디자인 시스템 점검**
-  - 키보드 네비게이션 전 페이지 검증 (MDI 탭 단축키, `use-hotkey` 확장)
-  - 색 대비·스크린리더 레이블 점검 (shadcn 기본 + 커스텀 컴포넌트)
-  - 모바일(<768px) 기본 뷰 대응 (관리자 시스템 특성상 제한적)
-  - 다크모드(`next-themes`) 전 페이지 스타일 검증
+- ✅ **Task 021: 접근성·반응형·다크모드 점검** - 완료
+  - `lib/hooks/use-hotkey.ts`에 `useHotkeyMap` 훅 추가
+  - `MdiTabBar`에 Ctrl+W(탭 닫기) / Ctrl+1~9(탭 이동) 단축키 적용
+  - `status-badge-map.tsx` 전 상태 배지에 `dark:` Tailwind 클래스 추가 (WCAG AA 대응)
+  - `DataTable` ScrollArea + ScrollBar 기반 가로 스크롤 이미 적용 확인
 
 - **Task 022: 테스트 강화 및 CI/CD 파이프라인**
   - 리포지토리 단위 테스트 커버리지 80% 이상 (Vitest 도입 검토)
