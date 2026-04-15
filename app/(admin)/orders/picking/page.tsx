@@ -1,5 +1,6 @@
 // F003: 피킹 작업 관리
 import { PageTitleBar } from "@/components/contents/page-title-bar";
+import { PickingClient } from "@/app/(admin)/orders/picking/picking-client";
 
 export default function OrdersPickingPage() {
   return (
@@ -9,7 +10,7 @@ export default function OrdersPickingPage() {
         screenNumber="31001"
         breadcrumbs={[{ label: "주문 처리" }, { label: "피킹 작업 관리" }]}
       />
-      <div className="p-6">{/* TODO: 피킹 대상 주문 목록 + 피킹 상세 (Phase 2) */}</div>
+      <PickingClient />
     </div>
   );
 }

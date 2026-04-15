@@ -1,5 +1,6 @@
 // F010: 배송 현황판
 import { PageTitleBar } from "@/components/contents/page-title-bar";
+import { DashboardClient } from "@/app/(admin)/shipments/dashboard/dashboard-client";
 
 export default function ShipmentsDashboardPage() {
   return (
@@ -9,9 +10,7 @@ export default function ShipmentsDashboardPage() {
         screenNumber="41004"
         breadcrumbs={[{ label: "배송 관리" }, { label: "배송 현황판" }]}
       />
-      <div className="p-6">
-        {/* TODO: 현황 카드 4종 + 배송이벤트 타임라인 + Realtime (Phase 2) */}
-      </div>
+      <DashboardClient />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 // F014: 프로모션 관리
 import { PageTitleBar } from "@/components/contents/page-title-bar";
+import { PromotionsClient } from "@/app/(admin)/promotions/promotions-client";
 
 export default function PromotionsPage() {
   return (
@@ -9,7 +10,7 @@ export default function PromotionsPage() {
         screenNumber="50001"
         breadcrumbs={[{ label: "프로모션" }, { label: "프로모션 관리" }]}
       />
-      <div className="p-6">{/* TODO: 프로모션 목록 + 등록/수정/삭제 (Phase 2) */}</div>
+      <PromotionsClient />
     </div>
   );
 }

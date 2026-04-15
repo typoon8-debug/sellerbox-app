@@ -1,5 +1,6 @@
 // F021: 광고 한도
 import { PageTitleBar } from "@/components/contents/page-title-bar";
+import { AdsCapsClient } from "@/app/(admin)/ads/caps/ads-caps-client";
 
 export default function AdsCapsPage() {
   return (
@@ -9,7 +10,7 @@ export default function AdsCapsPage() {
         screenNumber="70004"
         breadcrumbs={[{ label: "광고 관리" }, { label: "광고 한도" }]}
       />
-      <div className="p-6">{/* TODO: 노출/클릭 한도 폼 (Phase 2) */}</div>
+      <AdsCapsClient />
     </div>
   );
 }

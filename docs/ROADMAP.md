@@ -110,14 +110,14 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
     - `components/admin/domain/category-select.tsx` — 상품/가게 카테고리 선택
   - 더미 데이터 생성 유틸: `lib/mocks/` 폴더 — 각 도메인별 fixture 함수
 
-- **Task 005: 인증·매장·상품 UI 구현 (더미)**
+- ✅ **Task 005: 인증·매장·상품 UI 구현 (더미)** - 완료
   - `app/(auth)/login/page.tsx`: 이메일/비밀번호 로그인 폼 (RHF + Zod, 더미 인증)
   - `stores/page.tsx` (F012): 가게 목록 테이블 + 등록/수정/삭제 다이얼로그
   - `stores/info/page.tsx` (F013): 탭(배송정보·판매원·바로퀵정책·운행표·슬롯예약카운트) 구조 + 각 탭 폼
   - `items/page.tsx` (F001): 상품 목록 + 카테고리 필터 + 등록 폼 + 상세 이미지 업로더
   - 모든 페이지 반응형 검증(데스크톱 우선, 태블릿 대응)
 
-- **Task 006: 주문 처리·배송 UI 구현 (더미)**
+- ✅ **Task 006: 주문 처리·배송 UI 구현 (더미)** - 완료
   - `orders/picking/page.tsx` (F003): 피킹 대상 주문 목록 + 피킹 상세(항목별 요청/피킹/대체)
   - `orders/packing/page.tsx` (F004): 패킹 목록 + 중량 입력 + 완료 처리
   - `orders/labels/page.tsx` (F005): 라벨 출력 대상 선택 + ZPL 미리보기
@@ -127,7 +127,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `shipments/routing/page.tsx` (F009): 배송순서 생성 리스트
   - `shipments/dashboard/page.tsx` (F010): 현황 카드 4종 + 배송이벤트 타임라인
 
-- **Task 007: 재고·프로모션·쿠폰·광고 UI 구현 (더미)**
+- ✅ **Task 007: 재고·프로모션·쿠폰·광고 UI 구현 (더미)** - 완료
   - `inventory/page.tsx` (F002): 카테고리 필터 + 재고 목록 + 조정 다이얼로그 + 트랜잭션 이력 시트
   - `promotions/page.tsx` (F014), `promotions/items/page.tsx` (F015): 프로모션 등록/적용 상품 관리
   - `coupons/page.tsx` (F016), `coupons/issuances/page.tsx` (F017): 쿠폰 등록 및 발급/사용 조회
