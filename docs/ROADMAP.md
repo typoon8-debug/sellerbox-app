@@ -345,11 +345,12 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `status-badge-map.tsx` 전 상태 배지에 `dark:` Tailwind 클래스 추가 (WCAG AA 대응)
   - `DataTable` ScrollArea + ScrollBar 기반 가로 스크롤 이미 적용 확인
 
-- **Task 022: 테스트 강화 및 CI/CD 파이프라인**
-  - 리포지토리 단위 테스트 커버리지 80% 이상 (Vitest 도입 검토)
-  - Playwright E2E 테스트 커버리지 주요 플로우 100%
-  - `.github/workflows/ci.yml` 복구 (현재 삭제됨, git status 참고) — 린트/타입체크/E2E 단계
-  - Vercel Preview 배포 연동
+- ✅ **Task 022: 테스트 강화 및 CI/CD 파이프라인** - 완료
+  - Vitest + @vitest/coverage-v8 설치 및 `vitest.config.ts` 생성
+  - `package.json`에 `test:unit`, `test:coverage` 스크립트 추가
+  - `lib/repositories/__tests__/` 핵심 리포지토리 단위 테스트 작성 (store/item/inventory/order — 41개 테스트 통과)
+  - `e2e/ads.spec.ts` 신규 작성 (광고 콘텐츠 등록 → 일정 연결 → ACTIVE 전환 → 로그 조회)
+  - `.github/workflows/ci.yml` 복구 (lint+typecheck → 단위테스트 → build → E2E 선택 단계)
 
 - **Task 023: 배포 및 모니터링**
   - Vercel 배포 환경 변수 설정 및 프로덕션 Supabase 연결
