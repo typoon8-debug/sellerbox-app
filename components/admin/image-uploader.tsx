@@ -8,6 +8,8 @@ import { toast } from "sonner";
 interface ImageUploaderProps {
   value?: string | null;
   onChange: (dataUrl: string | null) => void;
+  /** 파일 선택 시 원본 File 객체 콜백 (Storage 업로드 등에 사용) */
+  onFileSelect?: (file: File | null) => void;
   accept?: string;
   maxSizeMB?: number;
   preview?: boolean;
@@ -22,6 +24,7 @@ interface ImageUploaderProps {
 export function ImageUploader({
   value,
   onChange,
+  onFileSelect,
   accept = "image/*",
   maxSizeMB = 5,
   preview = true,
@@ -45,6 +48,9 @@ export function ImageUploader({
       toast.error(`파일 크기는 ${maxSizeMB}MB 이하여야 합니다.`);
       return;
     }
+
+    // 원본 파일 콜백 (Storage 업로드에 활용)
+    onFileSelect?.(file);
 
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -78,6 +84,7 @@ export function ImageUploader({
   const handleRemove = () => {
     setPreviewUrl(null);
     onChange(null);
+    onFileSelect?.(null);
   };
 
   return (

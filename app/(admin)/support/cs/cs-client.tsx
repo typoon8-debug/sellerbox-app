@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -25,8 +26,9 @@ import { z } from "zod";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { LayerDialog } from "@/components/admin/layer-dialog";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
-import { MOCK_CS_TICKETS } from "@/lib/mocks/support";
+import { updateCsTicket } from "@/lib/actions/domain/support.actions";
 import type { CsTicketRow } from "@/lib/types/domain/support";
+import type { PaginatedResult } from "@/lib/types/api";
 
 // 티켓 유형 라벨 매핑
 const TICKET_TYPE_CONFIG: Record<string, { label: string; className: string }> = {
@@ -79,9 +81,17 @@ const columns: DataTableColumn<CsTicketRow>[] = [
   },
 ];
 
-export function CsClient() {
-  const [typeFilter, setTypeFilter] = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+interface CsClientProps {
+  initialData: PaginatedResult<CsTicketRow>;
+  initialType: string;
+  initialStatus: string;
+}
+
+export function CsClient({ initialData, initialType, initialStatus }: CsClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [typeFilter, setTypeFilter] = useState(initialType);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [selectedTicket, setSelectedTicket] = useState<CsTicketRow | null>(null);
 
   const form = useForm<ActionFormValues>({
@@ -89,11 +99,26 @@ export function CsClient() {
     defaultValues: { cs_action: "", status: "IN_PROGRESS" },
   });
 
-  const filteredData = MOCK_CS_TICKETS.filter((t) => {
-    if (typeFilter !== "ALL" && t.type !== typeFilter) return false;
-    if (statusFilter !== "ALL" && t.status !== statusFilter) return false;
-    return true;
-  });
+  // 필터 변경 시 URL 파라미터 업데이트 → 서버 재조회
+  const handleTypeFilter = (value: string) => {
+    setTypeFilter(value);
+    startTransition(() => {
+      const params = new URLSearchParams();
+      if (value !== "ALL") params.set("type", value);
+      if (statusFilter !== "ALL") params.set("status", statusFilter);
+      router.push(`?${params.toString()}`);
+    });
+  };
+
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    startTransition(() => {
+      const params = new URLSearchParams();
+      if (typeFilter !== "ALL") params.set("type", typeFilter);
+      if (value !== "ALL") params.set("status", value);
+      router.push(`?${params.toString()}`);
+    });
+  };
 
   const openDetail = (row: CsTicketRow) => {
     form.reset({
@@ -103,18 +128,30 @@ export function CsClient() {
     setSelectedTicket(row);
   };
 
-  const handleSubmit = (values: ActionFormValues) => {
-    console.log("CS 처리 저장:", values);
-    toast.success("CS 티켓이 처리되었습니다.");
-    setSelectedTicket(null);
-    form.reset();
+  const handleSubmit = async (values: ActionFormValues) => {
+    if (!selectedTicket) return;
+
+    const result = await updateCsTicket({
+      ticket_id: selectedTicket.ticket_id,
+      status: values.status,
+      cs_action: values.cs_action,
+    });
+
+    if (result.ok) {
+      toast.success("CS 티켓이 처리되었습니다.");
+      setSelectedTicket(null);
+      form.reset();
+      router.refresh();
+    } else {
+      toast.error(result.error.message ?? "처리 중 오류가 발생했습니다.");
+    }
   };
 
   return (
     <div className="p-6">
       {/* 필터 영역 */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
+        <Select value={typeFilter} onValueChange={handleTypeFilter} disabled={isPending}>
           <SelectTrigger className="h-8 w-32">
             <SelectValue placeholder="유형" />
           </SelectTrigger>
@@ -125,7 +162,7 @@ export function CsClient() {
             <SelectItem value="INQUIRY">문의</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={handleStatusFilter} disabled={isPending}>
           <SelectTrigger className="h-8 w-32">
             <SelectValue placeholder="상태" />
           </SelectTrigger>
@@ -140,7 +177,7 @@ export function CsClient() {
 
       <DataTable
         columns={columns}
-        data={filteredData}
+        data={initialData.data}
         rowKey={(row) => row.ticket_id}
         searchPlaceholder="티켓ID·고객ID 검색"
         onRowClick={openDetail}

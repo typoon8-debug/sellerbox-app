@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,15 +18,18 @@ import {
 } from "@/components/ui/form";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { LayerDialog } from "@/components/admin/layer-dialog";
-import { MOCK_AD_CAPS } from "@/lib/mocks/ad";
+import { createAdCap } from "@/lib/actions/domain/ad.actions";
 import type { AdCapRow } from "@/lib/types/domain/advertisement";
+import type { PaginatedResult } from "@/lib/types/api";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 
 const capFormSchema = z.object({
-  max_impressions_total: z.number().min(0),
-  max_impressions_per_user_day: z.number().min(0),
-  max_clicks_total: z.number().min(0),
+  content_id: z.string().min(1, "콘텐츠 ID를 입력하세요"),
+  store_id: z.string().min(1, "스토어 ID를 입력하세요"),
+  max_impressions_total: z.number().int().min(0),
+  max_impressions_per_user_day: z.number().int().min(0),
+  max_clicks_total: z.number().int().min(0),
 });
 
 type CapFormValues = z.infer<typeof capFormSchema>;
@@ -66,30 +70,51 @@ const columns: DataTableColumn<AdCapRow>[] = [
   },
 ];
 
-export function AdsCapsClient() {
+interface AdsCapsClientProps {
+  initialData: PaginatedResult<AdCapRow>;
+}
+
+export function AdsCapsClient({ initialData }: AdsCapsClientProps) {
+  const router = useRouter();
   const [registerOpen, setRegisterOpen] = useState(false);
 
   const form = useForm<CapFormValues>({
     resolver: zodResolver(capFormSchema),
     defaultValues: {
+      content_id: "",
+      store_id: "",
       max_impressions_total: 0,
       max_impressions_per_user_day: 0,
       max_clicks_total: 0,
     },
   });
 
-  const handleSubmit = (values: CapFormValues) => {
-    console.log("광고 한도 저장:", values);
-    toast.success("광고 한도가 등록되었습니다.");
-    setRegisterOpen(false);
-    form.reset();
+  const handleSubmit = async (values: CapFormValues) => {
+    const result = await createAdCap({
+      content_id: values.content_id,
+      store_id: values.store_id,
+      max_impressions_total: values.max_impressions_total > 0 ? values.max_impressions_total : null,
+      max_impressions_per_user_day:
+        values.max_impressions_per_user_day > 0 ? values.max_impressions_per_user_day : null,
+      max_clicks_total: values.max_clicks_total > 0 ? values.max_clicks_total : null,
+      status: "ACTIVE",
+    });
+
+    if (result.ok) {
+      toast.success("광고 한도가 등록되었습니다.");
+      setRegisterOpen(false);
+      form.reset();
+      router.refresh();
+    } else {
+      toast.error(result.error.message ?? "등록 중 오류가 발생했습니다.");
+    }
   };
 
   return (
     <div className="p-6">
       <DataTable
         columns={columns}
-        data={MOCK_AD_CAPS}
+        data={initialData.data}
         rowKey={(row) => row.cap_id}
         searchPlaceholder="한도 ID·콘텐츠 ID 검색"
         toolbarActions={
@@ -111,6 +136,32 @@ export function AdsCapsClient() {
       >
         <Form {...form}>
           <form className="space-y-4 p-4">
+            <FormField
+              control={form.control}
+              name="content_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>콘텐츠 ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="콘텐츠 UUID" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="store_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>스토어 ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="스토어 UUID" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="max_impressions_total"

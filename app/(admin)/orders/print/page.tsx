@@ -1,8 +1,5 @@
 // F006: 피킹리스트 출력
-"use client";
-
 import { PageTitleBar } from "@/components/contents/page-title-bar";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,13 +8,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MOCK_PICKING_TASKS } from "@/lib/mocks/order";
-import { Printer } from "lucide-react";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { PickingTaskRepository } from "@/lib/repositories/picking-task.repository";
+import { PickingItemRepository } from "@/lib/repositories/picking-item.repository";
+import { PrintButton } from "@/app/(admin)/orders/print/print-button";
+import type { Database } from "@/lib/supabase/database.types";
 
-export default function OrdersPrintPage() {
-  const handlePrint = () => {
-    window.print();
-  };
+type PickingTaskRow = Database["public"]["Tables"]["picking_task"]["Row"];
+type PickingItemRow = Database["public"]["Tables"]["picking_item"]["Row"];
+
+interface TaskWithItems {
+  task: PickingTaskRow;
+  items: PickingItemRow[];
+}
+
+export default async function OrdersPrintPage() {
+  const supabase = createAdminClient();
+  const taskRepo = new PickingTaskRepository(supabase);
+  const itemRepo = new PickingItemRepository(supabase);
+
+  // 전체 피킹 작업 조회
+  const tasks = await taskRepo.findAll({ sortBy: "created_at", sortOrder: "desc" });
+
+  // 각 작업의 피킹 항목을 병렬로 조회
+  const tasksWithItems: TaskWithItems[] = await Promise.all(
+    tasks.map(async (task) => {
+      const items = await itemRepo.findByTaskId(task.task_id);
+      return { task, items };
+    })
+  );
 
   return (
     <div>
@@ -29,11 +48,13 @@ export default function OrdersPrintPage() {
         />
       </div>
       <div className="p-6">
-        <div className="mb-4 flex justify-end print:hidden">
-          <Button onClick={handlePrint} variant="outline-gray">
-            <Printer className="mr-2 h-4 w-4" />
-            인쇄
-          </Button>
+        <div className="mb-4 flex items-center justify-between print:hidden">
+          <span className="text-muted-foreground text-sm">
+            총 {tasks.length}개 작업 / {tasksWithItems.reduce((s, t) => s + t.items.length, 0)}개
+            항목
+          </span>
+          {/* 클라이언트에서 window.print() 호출하는 버튼 */}
+          <PrintButton />
         </div>
 
         <div className="print-area">
@@ -45,28 +66,68 @@ export default function OrdersPrintPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-panel print:bg-gray-100">
-                  <TableHead>주문번호</TableHead>
-                  <TableHead>피커</TableHead>
-                  <TableHead>상품명</TableHead>
+                  <TableHead>태스크 ID</TableHead>
+                  <TableHead>주문 ID</TableHead>
+                  <TableHead>피커 ID</TableHead>
+                  <TableHead>상태</TableHead>
+                  <TableHead>항목 ID</TableHead>
                   <TableHead className="text-center">요청수량</TableHead>
                   <TableHead className="text-center">피킹수량</TableHead>
                   <TableHead>결과</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_PICKING_TASKS.flatMap((task) =>
-                  task.items.map((item, idx) => (
-                    <TableRow key={`${task.task_id}-${idx}`}>
-                      <TableCell className="whitespace-nowrap">
-                        {idx === 0 ? task.order_no : ""}
-                      </TableCell>
-                      <TableCell>{idx === 0 ? task.picker_name : ""}</TableCell>
-                      <TableCell>{item.item_name}</TableCell>
-                      <TableCell className="text-center">{item.requested_qty}</TableCell>
-                      <TableCell className="text-center">{item.picked_qty}</TableCell>
-                      <TableCell>{item.result ?? "-"}</TableCell>
-                    </TableRow>
-                  ))
+                {tasksWithItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="text-muted-foreground py-8 text-center text-sm"
+                    >
+                      피킹 데이터가 없습니다.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  tasksWithItems.flatMap(({ task, items }) =>
+                    items.length === 0 ? (
+                      <TableRow key={task.task_id}>
+                        <TableCell className="text-xs">{task.task_id.slice(0, 8)}…</TableCell>
+                        <TableCell className="text-xs">{task.order_id.slice(0, 8)}…</TableCell>
+                        <TableCell className="text-xs">
+                          {task.picker_id?.slice(0, 8) ?? "-"}
+                        </TableCell>
+                        <TableCell className="text-xs">{task.status}</TableCell>
+                        <TableCell
+                          colSpan={4}
+                          className="text-muted-foreground text-center text-xs"
+                        >
+                          항목 없음
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      items.map((item, idx) => (
+                        <TableRow key={`${task.task_id}-${item.picking_item_id}`}>
+                          <TableCell className="text-xs whitespace-nowrap">
+                            {idx === 0 ? `${task.task_id.slice(0, 8)}…` : ""}
+                          </TableCell>
+                          <TableCell className="text-xs whitespace-nowrap">
+                            {idx === 0 ? `${task.order_id.slice(0, 8)}…` : ""}
+                          </TableCell>
+                          <TableCell className="text-xs whitespace-nowrap">
+                            {idx === 0 ? (task.picker_id?.slice(0, 8) ?? "-") : ""}
+                          </TableCell>
+                          <TableCell className="text-xs whitespace-nowrap">
+                            {idx === 0 ? task.status : ""}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {item.picking_item_id.slice(0, 8)}…
+                          </TableCell>
+                          <TableCell className="text-center">{item.requested_qty}</TableCell>
+                          <TableCell className="text-center">{item.picked_qty}</TableCell>
+                          <TableCell className="text-xs">{item.result ?? "-"}</TableCell>
+                        </TableRow>
+                      ))
+                    )
+                  )
                 )}
               </TableBody>
             </Table>

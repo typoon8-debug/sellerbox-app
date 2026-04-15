@@ -1,0 +1,358 @@
+구분,테이블명(영문),테이블명(한글),SEQ,컬럼명(영문),컬럼명(한글),NN,데이터 타입,길이,PK,FK,인덱스,기본값,제약조건,비고
+SB,order,주문,1 ,order_id,주문ID,Y,CHAR,36,PK,,,UUID(),,
+SB,order,주문,2 ,store_id,가게ID,Y,CHAR,36,PK,FK,,,,
+SB,order,주문,3 ,customer_id,회원ID,Y,CHAR,36,PK,FK,,,,
+SB,order,주문,4 ,address_id,주소ID,Y,CHAR,36,,FK,,,,
+SB,order,주문,5 ,order_no,주문번호,Y,CHAR,30,,,UK,,,
+SB,order,주문,6 ,payment_id,결재ID,N,CHAR,36,,FK,,,,
+SB,order,주문,7 ,ordered_at,주문일시,Y,DATETIME,8,,,,,,
+SB,order,주문,8 ,paid_at,결제일시,N,DATETIME,8,,,,,,
+SB,order,주문,9 ,discounted_total_price,할인가격,Y,INT,4,,,,,,
+SB,order,주문,10 ,origin_total_price,원래가격,Y,INT,4,,,,,,
+SB,order,주문,11 ,delivery_method,배송방식,N,ENUM,,,,,,,"DELIVERY, BBQ, PICKUP, RESERVE, FRESH_MORNING, SAME_DAY, 3P_DELIVERY"
+SB,order,주문,12 ,quick_depart_date,퀵출발일,N,DATE,,,,,,,
+SB,order,주문,13 ,quick_depart_time,퀵출발시각,N,TIME,,,,,,,
+SB,order,주문,14 ,ro_rider_id,선택라이더,N,CHAR,36,,,,,,
+SB,order,주문,15 ,delivery_fee,배송료,Y,"DECIMAL(12,2)",13,,,,,,기본 0
+SB,order,주문,16 ,delivery_price,배달료,Y,INT,4,,,,,,
+SB,order,주문,17 ,order_price,주문가격,Y,INT,4,,,,,,
+SB,order,주문,18 ,points_earned,적립포인트,Y,INT,,,,,,,주문 확정 시 적립
+SB,order,주문,19 ,points_redeemed,사용포인트,Y,INT,,,,,,,결제에 사용된 포인트
+SB,order,주문,20 ,points_value_redeemed,사용포인트금액,Y,"DECIMAL(12,2)",13,,,,,,통화 환산값
+SB,order,주문,21 ,final_payable,최종결제금액,Y,"DECIMAL(12,2)",13,,,,,,= order_total ? points_value_redeemed
+SB,order,주문,22 ,requests,요청사항,N,VARCHAR,255,,,,,,
+SB,order,주문,23 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,order,주문,24 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,order,주문,25 ,status,상태,Y,ENUM,2,,,,,,"CREATED(생성), PAID(결제완료), PACKING(포장중), DISPATCHED(배송출발), DELIVERING(배송중), DELIVERED(배송완료), CANCELED(취소), REFUNDED(환불)"
+SB,order_item,주문상세,1 ,order_detail_id,주문상세ID,Y,CHAR(36),36,PK,,,,,주문상세 고유 식별자(UUID)
+SB,order_item,주문상세,2 ,order_id,주문ID,Y,CHAR(36),36,FK,,,,,주문 마스터 참조
+SB,order_item,주문상세,3 ,item_id,상품ID,Y,CHAR(36),36,FK,,,,,주문한 상품
+SB,order_item,주문상세,4 ,qty,주문수량,Y,INT,4,,,,,,주문한 수량
+SB,order_item,주문상세,5 ,unit_price,단가,Y,"DECIMAL(12,2)",13,,,,,,단위 상품 금액
+SB,order_item,주문상세,6 ,discount,할인금액,N,"DECIMAL(12,2)",13,,,,,,쿠폰/프로모션 할인
+SB,order_item,주문상세,7 ,line_total,소계금액,Y,"DECIMAL(12,2)",13,,,,,,qty × unit_price - discount
+SB,order_item,주문상세,8 ,status,주문상세상태,Y,ENUM,-,,,,,,"ORDERED, PACKING, SHIPPED, DELIVERED, CANCELED"
+SB,order_item,주문상세,9 ,shipped_qty,출고수량,N,INT,,,,,,,실 출고된 수량
+SB,order_item,주문상세,10 ,created_at,생성일시,Y,DATETIME,8,,,,,,생성시각
+SB,order_item,주문상세,11 ,updated_at,수정일시,N,DATETIME,8,,,,,,수정시각
+SB,review,리뷰,1 ,review_id,리뷰ID,Y,CHAR,36,PK,,,UUID(),,
+SB,review,리뷰,2 ,store_id,가게ID,Y,CHAR,36,PK,FK,,,,
+SB,review,리뷰,3 ,customer_id,회원ID,Y,CHAR,36,PK,FK,,,,
+SB,review,리뷰,4 ,item_id,상품ID,N,CHAR,36,PK,FK,,,,
+SB,review,리뷰,5 ,rating,별점,Y,INT,4,,,,,,
+SB,review,리뷰,6 ,content,내용,N,VARCHAR,255,,,,,,
+SB,review,리뷰,7 ,review_picture_url,리뷰사진,N,TEXT,255,,,,,,
+SB,review,리뷰,8 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,review,리뷰,9 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,review,리뷰,10 ,status,상태,Y,ENUM,2,,,,,,"VISIBLE(노출), HIDDEN(숨김), REPORTED(신고), DELETED(삭제)"
+SB,shipment,배송,1 ,shipment_id,배송ID,Y,CHAR,36,PK,,,,,
+SB,shipment,배송,2 ,order_id,주문ID,Y,CHAR,36,,FK,,,,
+SB,shipment,배송,3 ,tracking_no,송장번호,N,VARCHAR,64,,,IDX,,,
+SB,shipment,배송,4 ,method,배송방식,Y,ENUM,,,,,,,"QUICK, RO_ONDEMAND"
+SB,shipment,배송,5 ,store_id,가게ID,N,CHAR,36,IDX,,,,,
+SB,shipment,배송,6 ,depart_date,출발일,N,DATE,,IDX,,,,,QUICK
+SB,shipment,배송,7 ,depart_time,출발시각,N,TIME,,IDX,,,,,QUICK
+SB,shipment,배송,8 ,eta_min,ETA최소(분),N,TINYINT,,,,,,,RO
+SB,shipment,배송,9 ,eta_max,ETA최대(분),N,TINYINT,,,,,,,RO
+SB,shipment,배송,10 ,delivery_fee,배송료,Y,DECIMAL,"12,2",,,,,,기본 0
+SB,shipment,배송,11 ,quote_id,견적ID,N,CHAR,36,,,,,,rider_fee_quote
+SB,shipment,배송,12 ,status,상태,Y,ENUM,,,,IDX,,,"READY, ASSIGNED, PICKED_UP, OUT_FOR_DELIVERY, DELIVERED, FAILED, SCHEDULED"
+SB,shipment,배송,13 ,rider_id,라이더ID,N,CHAR,36,,FK,,,,
+SB,shipment,배송,14 ,updated_at,갱신일시,Y,DATETIME,8,,,,,,
+SB,shipment_event,배송이벤트,1 ,event_id,이벤트ID,Y,CHAR,36,PK,,,,,
+SB,shipment_event,배송이벤트,2 ,shipment_id,배송ID,Y,CHAR,36,,FK,,,,
+SB,shipment_event,배송이벤트,3 ,event_code,이벤트코드,Y,ENUM,2,,,,,,"ASSIGNED, OUT, ARRIVED, FAILED, PROOF_UPLOADED, SCHEDULED, VEHICLE_DEPARTED"
+SB,shipment_event,배송이벤트,4 ,memo,메모,N,TEXT,255,,,,,,
+SB,shipment_event,배송이벤트,5 ,metadata,메타데이터,N,json,65535,,,,,,
+SB,shipment_event,배송이벤트,6 ,created_at,생성일시,Y,DATETIME,8,,,,,,
+SB,seller,판매원,1 ,seller_id,판매자ID,Y,CHAR,36,PK,,,,,
+SB,seller,판매원,2 ,email,이메일,Y,VARCHAR,120,,,,,,UNIQUE
+SB,seller,판매원,3 ,name,이름,Y,VARCHAR,80,,,,,,
+SB,seller,판매원,4 ,phone,전화,N,VARCHAR,20,,,,,,
+SB,seller,판매원,5 ,role,역할,Y,ENUM,2,,,,,,"OWNER,MANAGER,PICKER,PACKER"
+SB,seller,판매원,6 ,store_id,가게ID,Y,CHAR,36,,FK,,,,
+SB,seller,판매원,7 ,created_at,생성일시,Y,DATETIME,8,,,,,,
+SB,seller,판매원,8 ,is_active,활성상태,Y,ENUM,2,,,IDX,,,"ACTIVE,INACTIVE"
+SB,store,가게,1 ,store_id,가게ID,Y,CHAR,36,PK,,,UUID(),,
+SB,store,가게,2 ,tenant_id,테넌트ID,Y,CHAR,36,,FK,,,,
+SB,store,가게,3 ,name,가게이름,Y,VARCHAR,255,,,,,,
+SB,store,가게,4 ,store_category,가게유형,Y,VARCHAR,20,,,,,,"슈퍼, 마트, 편의점, 채소가게, 과일가게, 정육점"
+SB,store,가게,5 ,address,주소,Y,VARCHAR,255,,,,,,
+SB,store,가게,6 ,store_picture,가게사진,N,BLOB,,,,,,,64kb이미지
+SB,store,가게,7 ,phone,전화번호,Y,VARCHAR,20,,,,,,
+SB,store,가게,8 ,contnet,소개글,N,TEXT,255,,,,,,
+SB,store,가게,9 ,min_delivery_price,최소주문금액,Y,INT,4,,,,,,
+SB,store,가게,10 ,delivery_tip,배달팁,Y,INT,4,,,,,,
+SB,store,가게,11 ,min_delivery_time,최소배달예상시간,N,INT,4,,,,,,
+SB,store,가게,12 ,max_delivery_time,최대배달예상시간,N,INT,4,,,,,,
+SB,store,가게,13 ,points_enabled,포인트적립사용여부,Y,TINYINT,1,,,,,,1=포인트 기능 사용
+SB,store,가게,14 ,accrual_rate_pct,적립비율(%),N,"DECIMAL(5,2)",,,,,,,예: 0.50 = 구매금액×0.5%
+SB,store,가게,15 ,redeem_enabled,결제시사용허용여부,Y,TINYINT,1,,,,,,결제 시 포인트 사용 허용
+SB,store,가게,16 ,min_redeem_unit,최소사용단위,N,INT,4,,,,,,예: 100 point 단위
+SB,store,가게,17 ,max_redeem_rate_pct,최대사용비율(%),N,"DECIMAL(5,2)",,,,,,,결제금액 대비 상한
+SB,store,가게,18 ,max_redeem_amount,1회최대사용포인트,N,INT,4,,,,,,절대 상한
+SB,store,가게,19 ,expire_after_days,적립만료일수,N,INT,4,,,,,,예: 365
+SB,store,가게,20 ,rounding_mode,반올림정책,N,ENUM,2,,,,,,"DOWN','NEAREST','UP' : 적립 계산 반올림"
+SB,store,가게,21 ,rating,평점,Y,"DECIMAL(2,1)",3,,,,,,
+SB,store,가게,22 ,dibs_count,찜수,Y,INT,4,,,,,,
+SB,store,가게,23 ,review_count,리뷰수,Y,INT,4,,,,,,
+SB,store,가게,24 ,operation_hours,운영시간,N,VARCHAR,255,,,,,,
+SB,store,가게,25 ,closed_days,휴무일,N,VARCHAR,255,,,,,,
+SB,store,가게,26 ,delivery_dddress,배달지역,N,VARCHAR,255,,,,,,
+SB,store,가게,27 ,reg_number,사업자등록번호,Y,VARCHAR,20,,,,,,
+SB,store,가게,28 ,jumin_number,주민등록번호,Y,VARCHAR,20,,,,,,
+SB,store,가게,29 ,ceo_name,대표자이름,Y,VARCHAR,20,,,,,,
+SB,store,가게,30 ,reg_code,등록코드,Y,CHAR,36,,,,UUID(),,
+SB,store,가게,31 ,fee,수수료,Y,"DECIMAL(4,2)",5,,,,,,
+SB,store,가게,32 ,contract_start_at,계약시작일자,Y,DATETIME,8,,,,,,
+SB,store,가게,33 ,contract_end_at,계약종료일자,Y,DATETIME,8,,,,,,
+SB,store,가게,34 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,store,가게,35 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,store,가게,36 ,status,상태,Y,ENUM,2,,,,,,"ACTIVE(운영중), INACTIVE(휴점), CLOSED(폐점), PENDING(승인대기)"
+SB,store_fulfillment,가게배송,1 ,id,가게배송ID,Y,CHAR,36,PK,,,UUID,,
+SB,store_fulfillment,가게배송,2 ,store_id,가게ID,Y,CHAR,36,FK,,,,,store.store_id
+SB,store_fulfillment,가게배송,3 ,fulfillment_type,처리유형,Y,ENUM,2,,,,,,"DELIVERY','PICKUP','BBQ','RESERVE','FRESH_MORNING','SAME_DAY','3P_DELIVERY','NONE'"
+SB,store_fulfillment,가게배송,4 ,active,활성여부,Y,BOOLEAN,1,,,,TRUE,,
+SB,store_fulfillment,가게배송,5 ,created_at,생성일시,Y,DATETIME,8,,,,등록일,,
+SB,ceo_review,사장님 리뷰,1 ,ceo_reviewId,CEO리뷰ID,Y,CHAR,36,PK,,,UUID(),,ceo_review
+SB,ceo_review,사장님 리뷰,2 ,reviewId,리뷰ID,Y,CHAR,36,,FK,,UUID(),,review
+SB,ceo_review,사장님 리뷰,3 ,content,내용,N,VARCHAR,255,,,,,,
+SB,ceo_review,사장님 리뷰,4 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,ceo_review,사장님 리뷰,5 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,ceo_review,사장님 리뷰,6 ,status,상태,Y,ENUM,2,,,,,,"VISIBLE(노출), HIDDEN(숨김), DELETED(삭제)"
+SB,item,상품,1 ,item_id,상품ID,Y,CHAR,36,PK,,,UUID(),,
+SB,item,상품,2 ,store_id,가게ID,Y,CHAR,36,PK,FK,,,,
+SB,item,상품,3 ,sku,재고관리단위,Y,CHAR,13,,,,,,롯데 sku 데이터타입/길이 확인 필요
+SB,item,상품,4 ,category_code_value,카테고리코드,Y,VARCHAR,40,,,,index,,"VEG,SIDE,MEAL,FRUIT,AGRI,MEAT,DRINK,DAIRY,HEALTH,SNACK,ESSEN"
+SB,item,상품,5 ,category_name,카테고리명,Y,VARCHAR,20,,,,,,"채소, 반찬·간편식, 과일·농산, 정육·수산, 간편식, 음료·유제품, 생활·건강, 간식, 요리필수품"
+SB,item,상품,6 ,name,상품이름,Y,VARCHAR,255,,,,,,
+SB,item,상품,7 ,list_price,가격,Y,INT,4,,,,,,
+SB,item,상품,8 ,sale_price,세일가격,Y,INT,4,,,,,,
+SB,item,상품,9 ,item_picture_url,상품사진,N,TEXT,255,,,,,,
+SB,item,상품,10 ,ranking_yn,랭킹여부,Y,CHAR,1,,,,,,"""Y"", ""N"""
+SB,item,상품,11 ,ranking,랭킹,Y,INT,4,,,,,,order by ranking
+SB,item,상품,12 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,item,상품,13 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,item,상품,14 ,status,상태,Y,ENUM,2,,,,,,"ACTIVE(판매중), INACTIVE(비판매), OUT_OF_STOCK(품절), DISCONTINUED(단종)"
+SB,item_detail,상품설명,1 ,item_detail_id,상품설명ID,Y,CHAR,36,,,,,,UUID
+SB,item_detail,상품설명,2 ,item_id,상품ID,Y,CHAR,36,,,,,,
+SB,item_detail,상품설명,3 ,store_id,가게ID,Y,CHAR,36,,,,,,
+SB,item_detail,상품설명,4 ,description_short,짧은설명,,VARCHAR,500,,,,,,카드/목록 요약
+SB,item_detail,상품설명,5 ,item_img,상품이미지,,MEDIUMBLOB,,,,,,,1mb
+SB,item_detail,상품설명,6 ,item_thumbnail_small,상품이미지썸네일(소),,BLOB,,,,,,,64kb
+SB,item_detail,상품설명,7 ,item_thumbnail_big,상품이미지썸네일(대),,BLOB,,,,,,,64kb
+SB,item_detail,상품설명,8 ,item_detail_img_adv,상품상세이미지(광고),,MEDIUMBLOB,,,,,,,1mb
+SB,item_detail,상품설명,9 ,item_detail_img_detail,상품상세이미지(세부),,MEDIUMBLOB,,,,,,,1mb
+SB,item_detail,상품설명,10 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,item_detail,상품설명,11 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,item_detail,상품설명,12 ,status,상태,Y,ENUM,2,,,,,,"ACTIVE(판매중), INACTIVE(비판매)"
+SB,promotion,프로모션,1 ,promo_id,프로모션ID,Y,CHAR,36,PK,,,,,UUID
+SB,promotion,프로모션,2 ,store_id,가게ID,Y,CHAR,36,,FK,,,,store 참조
+SB,promotion,프로모션,3 ,name,프로모션명,Y,VARCHAR,120,,,,,,전시용 명칭
+SB,promotion,프로모션,4 ,type,프로모션유형,Y,ENUM,2,,,IDX,,,"SALE, DISCOUNT_PCT, DISCOUNT_FIXED, ONE_PLUS_ONE, TWO_PLUS_ONE, BUNDLE"
+SB,promotion,프로모션,5 ,discount_unit,할인단위,N,ENUM,2,,,,,,"PCT, FIXED (할인형에만 사용)"
+SB,promotion,프로모션,6 ,discount_value,할인값,N,DECIMAL,"12,2",,,,,,"PCT 시 %값, FIXED 시 금액"
+SB,promotion,프로모션,7 ,bundle_price,번들가격,N,DECIMAL,"12,2",,,,,,BUNDLE용 세트가
+SB,promotion,프로모션,8 ,priority,우선순위,Y,INT,1,,,IDX,,,낮을수록 먼저 평가(기본 100)
+SB,promotion,프로모션,9 ,stackable,중복적용,Y,TINYINT,1,,,,,,1=허용
+SB,promotion,프로모션,10 ,flash_enabled,플래시사용여부,Y,TINYINT,1,,,,,,1=FLASH 룰 활성
+SB,promotion,프로모션,11 ,flash_time_start,일일시작시간,N,TIME,8,,,,#REF!,,예: 16:00:00
+SB,promotion,프로모션,12 ,flash_time_end,일일종료시간,N,TIME,8,,,,,,예: 18:00:00
+SB,promotion,프로모션,13 ,flash_dow_mask,요일마스크,N,VARCHAR(14),14,,,,,,"예: MON,TUE,WED"
+SB,promotion,프로모션,14 ,max_usage,전체한도,N,INT,1,,,,,,전체 적용 횟수 제한
+SB,promotion,프로모션,15 ,per_user_limit,1인당한도,N,INT,1,,,,,,사용자별 제한
+SB,promotion,프로모션,16 ,start_at,시작일시,Y,DATETIME,8,,,,,,
+SB,promotion,프로모션,17 ,end_at,종료일시,Y,DATETIME,8,,,,,,
+SB,promotion,프로모션,18 ,status,상태,Y,ENUM,2,,,IDX,,,"SCHEDULED, ACTIVE, PAUSED, ENDED"
+SB,promotion,프로모션,19 ,created_at,생성일시,Y,DATETIME,8,,,,,,
+SB,promotion,프로모션,20 ,updated_at,수정일시,Y,DATETIME,8,,,,,,ON UPDATE
+SB,promotion_item,프로모션상품,1 ,id,매핑ID,Y,CHAR,36,PK,,,,,UUID
+SB,promotion_item,프로모션상품,2 ,promo_id,프로모션ID,Y,CHAR,36,,FK,,,,promotion 참조
+SB,promotion_item,프로모션상품,3 ,item_id,상품ID,Y,CHAR,36,,FK,,,,item 참조
+SB,promotion_item,프로모션상품,4 ,condition_qty,조건수량,N,INT,1,,,,,,"N+1 조건수량(예: 1, 2, 3, 4, 5)"
+SB,promotion_item,프로모션상품,5 ,reward_qty,증정수량,N,INT,1,,,,,,"N+1 증정수량(예: 1, 2, 3, 4, 5)"
+SB,promotion_item,프로모션상품,6 ,reward_item_id,증정상품ID,N,CHAR,36,,FK,,,,대체 증정 가능
+SB,promotion_item,프로모션상품,7 ,limit_per_order,주문당한도,N,INT,1,,,,,,
+SB,promotion_item,프로모션상품,8 ,status,상태,Y,ENUM,2,,,,,,"ACTIVE, INACTIVE"
+SB,promotion_item,프로모션상품,9 ,created_at,생성일시,Y,DATETIME,8,,,,,,
+SB,promotion_item,프로모션상품,10 ,updated_at,수정일시,Y,DATETIME,8,,,,,,ON UPDATE
+SB,picking_task,주문서피킹작업,1 ,task_id,피킹작업ID,Y,CHAR,36,PK,,,UUID(),,
+SB,picking_task,주문서피킹작업,2 ,order_id,주문ID,Y,CHAR,36,,FK,IDX,,,
+SB,picking_task,주문서피킹작업,3 ,store_id,가게ID,Y,CHAR,36,,FK,,,,
+SB,picking_task,주문서피킹작업,4 ,picker_id,피커ID,N,CHAR,36,,FK,,,,
+SB,picking_task,주문서피킹작업,5 ,status,상태,Y,ENUM,2,,,IDX,,,"CREATED,PICKING,PICKED,FAILED"
+SB,picking_task,주문서피킹작업,6 ,created_at,생성일시,Y,DATETIME,8,,,,,,
+SB,picking_task,주문서피킹작업,7 ,completed_at,완료일시,N,DATETIME,8,,,,,,
+SB,picking_item,주문상품선별,1 ,picking_item_id,피킹항목ID,Y,CHAR,36,PK,,,UUID(),,
+SB,picking_item,주문상품선별,2 ,task_id,피킹작업ID,Y,CHAR,36,,FK,IDX,,,
+SB,picking_item,주문상품선별,3 ,order_item_id,주문항목ID,Y,CHAR,36,,FK,,,,
+SB,picking_item,주문상품선별,4 ,requested_qty,요청수량,Y,INT,4,,,,,,
+SB,picking_item,주문상품선별,5 ,picked_qty,피킹수량,Y,INT,4,,,,,,
+SB,picking_item,주문상품선별,6 ,result,결과,Y,ENUM,2,,,,,,"OK,SHORT,SUBSTITUTE"
+SB,picking_item,주문상품선별,7 ,substitute_product_id,대체상품ID,N,CHAR,36,,FK,,,,
+SB,picking_item,주문상품선별,8 ,memo,메모,N,TEXT,255,,,,,,
+SB,packing_task,포장작업,1 ,pack_id,패킹작업ID,Y,CHAR,36,PK,,,UUID(),,
+SB,packing_task,포장작업,2 ,order_id,주문ID,Y,CHAR,36,,FK,IDX,,,
+SB,packing_task,포장작업,3 ,packer_id,패커ID,N,CHAR,36,,FK,,,,
+SB,packing_task,포장작업,4 ,status,상태,Y,ENUM,2,,,IDX,,,"READY,PACKING,PACKED"
+SB,packing_task,포장작업,5 ,packing_weight,포장중량,N,"DECIMAL(10,2)",11,,,,,,
+SB,packing_task,포장작업,6 ,completed_at,완료일시,N,DATETIME,8,,,,,,
+SB,label,배송라벨.송장정보,1 ,label_id,라벨ID,Y,CHAR,36,PK,,,UUID(),,
+SB,label,배송라벨.송장정보,2 ,order_id,주문ID,Y,CHAR,36,,FK,IDX,,,
+SB,label,배송라벨.송장정보,3 ,zpl_text,ZPL텍스트,Y,TEXT,255,,,,,,
+SB,label,배송라벨.송장정보,4 ,label_type,라벨유형,Y,ENUM,2,,,,,,"BOX,BAG,INVOICE"
+SB,label,배송라벨.송장정보,5 ,printed_at,인쇄일시,N,DATETIME,8,,,,,,
+SB,store_quick_policy,스토아바로퀵정책,1 ,policy_id,정책ID,Y,CHAR,36,PK,,,UUID,,
+SB,store_quick_policy,스토아바로퀵정책,2 ,store_id,가게ID,Y,CHAR,36,,FK,,,,1:1정책
+SB,store_quick_policy,스토아바로퀵정책,3 ,min_order_amount,최소주문금액,Y,"DECIMAL(12,2)",13,,,,"15,000",,
+SB,store_quick_policy,스토아바로퀵정책,4 ,daily_runs,일일운행횟수,Y,TINYINT,1,,,,5,,
+SB,store_quick_policy,스토아바로퀵정책,5 ,capacity_per_slot,슬롯수용량,y,INT,,,,,50,,
+SB,store_quick_policy,스토아바로퀵정책,6 ,status,상태,Y,ENUM,2,,,,ACTIVE,,"ACTIVE, INACTIVE"
+SB,store_quick_policy,스토아바로퀵정책,7 ,created_at,생성일시,Y,DATETIME,8,,,,,,
+SB,store_quick_policy,스토아바로퀵정책,8 ,updated_at,수정일시,Y,DATETIME,8,,,,,,ON UPDATE
+SB,store_quick_timeslot,바로퀵고정운행시각,1 ,slot_id,슬롯ID,Y,CHAR,36,PK,,,,,
+SB,store_quick_timeslot,바로퀵고정운행시각,2 ,store_id,가게ID,Y,CHAR,36,,,,,,
+SB,store_quick_timeslot,바로퀵고정운행시각,3 ,label,표기(11:00 등),Y,VARCHAR,20,,,,,,
+SB,store_quick_timeslot,바로퀵고정운행시각,4 ,depart_time,출발시각,Y,TIME,,,,,,,"11:00, 14:00, 16:00, 18:00, 20:00"
+SB,store_quick_timeslot,바로퀵고정운행시각,5 ,order_cutoff_min,마감(분전),Y,INT,,,,,30,,기본 : 30
+SB,store_quick_timeslot,바로퀵고정운행시각,6 ,dow_mask,요일마스크,N,VARCHAR,20,,,,,,MON…SUN
+SB,store_quick_timeslot,바로퀵고정운행시각,7 ,status,상태,Y,ENUM,2,,,,ACTIVE,,"ACTIVE, INACTIVE"
+SB,store_quick_timeslot,바로퀵고정운행시각,8 ,created_at,생성일시,Y,DATETIME,8,,,,,,
+SB,store_quick_timeslot,바로퀵고정운행시각,9 ,updated_at,수정일시,Y,DATETIME,8,,,,,,
+SB,store_quick_slot_usage,슬롯별 예약 카운트,1 ,usage_id,사용ID,Y,CHAR,36,PK,,,,,
+SB,store_quick_slot_usage,슬롯별 예약 카운트,2 ,store_id,가게ID,Y,CHAR,36,,UQ,,,,
+SB,store_quick_slot_usage,슬롯별 예약 카운트,3 ,depart_date,출발일,Y,DATE,,,UQ,,,,
+SB,store_quick_slot_usage,슬롯별 예약 카운트,4 ,depart_time,출발시간,Y,TIME,,,UQ,,,,
+SB,store_quick_slot_usage,슬롯별 예약 카운트,5 ,reserved_count,예약수,Y,INT,,,,,,,누적
+SB,cs_ticket,고객요청정보,1 ,ticket_id,CS티켓ID,Y,CHAR,36,PK,,,,,
+SB,cs_ticket,고객요청정보,2 ,order_id,주문ID,Y,CHAR,36,,FK,IDX,,,
+SB,cs_ticket,고객요청정보,3 ,customer_id,고객ID,Y,CHAR,36,,FK,,,,
+SB,cs_ticket,고객요청정보,4 ,type,유형,Y,ENUM,2,,,,,,"REFUND,EXCHANGE,INQUIRY"
+SB,cs_ticket,고객요청정보,5 ,cs_contents,CS내용,Y,VARCHAR,255,,,,,,
+SB,cs_ticket,고객요청정보,6 ,cs_action,CS처리결과,Y,VARCHAR,255,,,,,,
+SB,cs_ticket,고객요청정보,7 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,cs_ticket,고객요청정보,8 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,cs_ticket,고객요청정보,9 ,status,상태,Y,ENUM,2,,,IDX,,,"OPEN,IN_PROGRESS,CLOSED"
+SB,dispatch_request,배송요청,1 ,dispatch_id,배차요청ID,Y,CHAR,36,PK,,,,,
+SB,dispatch_request,배송요청,2 ,order_id,주문ID,Y,CHAR,36,,FK,IDX,,,
+SB,dispatch_request,배송요청,3 ,store_id,가게ID,Y,CHAR,36,,FK,,,,
+SB,dispatch_request,배송요청,4 ,status,상태,Y,ENUM,2,,,IDX,,,"REQUESTED,ASSIGNED,CANCELLED"
+SB,dispatch_request,배송요청,5 ,rider_id,라이더ID,N,CHAR,36,,FK,,,,
+SB,dispatch_request,배송요청,6 ,requested_at,요청일시,Y,DATETIME,8,,,,,,
+SB,dispatch_request,배송요청,7 ,assigned_at,배정일시,N,DATETIME,8,,,,,,
+SB,inventory,상품재고,1 ,inventory_id,재고ID,Y,CHAR,36,PK,,,UUID(),,
+SB,inventory,상품재고,2 ,store_id,가게ID,Y,CHAR,36,,FK,,,,
+SB,inventory,상품재고,3 ,item_id,상품ID,Y,CHAR,36,,FK,,,,
+SB,inventory,상품재고,4 ,on_hand,현재가용재고,Y,INT,4,,,,,,SB : 입고/조정시 onHand 증가/감소
+SB,inventory,상품재고,5 ,reserved,홀드수량,Y,INT,4,,,,,,"FP : 주문생성시 reserved 증가
+      결제성공시 onHand차감, reserved 감소
+      취소/환분시 onHand복구, reserved 복구"
+SB,inventory,상품재고,6 ,safety_stock,안전재고,Y,INT,4,,,,,,FP : 안전재고 (알림용)
+SB,inventory,상품재고,7 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,inventory,상품재고,8 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,inventory,상품재고,9 ,status,상태,Y,ENUM,2,,,,,,"AVAILABLE(가용), RESERVED(예약), DAMAGED(불량), ADJUSTED(조정됨)"
+SB,inventory_txn,재고트랜잭션,1 ,txnId,트랜잭션ID,Y,CHAR,36,PK,,,UUID(),,
+SB,inventory_txn,재고트랜잭션,2 ,inventory_id,재고ID,Y,CHAR,36,,FK,,,,
+SB,inventory_txn,재고트랜잭션,3 ,item_id,상품ID,Y,CHAR,36,,FK,,,,
+SB,inventory_txn,재고트랜잭션,4 ,store_id,가게ID,Y,CHAR,36,,FK,,,,
+SB,inventory_txn,재고트랜잭션,5 ,type,입출고유형,Y,VARCHAR,20,,,,,,"입출고 유형
+- INBOUND (입고)
+- OUTBOUND (출고)
+- ADJUST (재고조정)
+- RESERVE (주문예약)
+- RELEASE (예약해제/주문취소)
+- RETURN (반품/복구)"
+SB,inventory_txn,재고트랜잭션,6 ,ref_type,참조엔터티유형,Y,VARCHAR,30,,,,,,"예: order, manual, system"
+SB,inventory_txn,재고트랜잭션,7 ,ref_id,참조ID,Y,CHAR,36,,,,,,orderId
+SB,inventory_txn,재고트랜잭션,8 ,quantity,이동 수량,Y,INT,4,,,,,,"이동수량 + : 증가, - : 감소"
+SB,inventory_txn,재고트랜잭션,9 ,before_quantity,이동전 재고,Y,INT,4,,,,,,이동전 재고 onHand기준
+SB,inventory_txn,재고트랜잭션,10 ,after_quantity,이동후 재고,Y,INT,4,,,,,,이동후 재고 onHand기준
+SB,inventory_txn,재고트랜잭션,11 ,reason,상세사유,N,VARCHAR,255,,,,,,"예 : 파손폐기, order#1234 출고"
+SB,inventory_txn,재고트랜잭션,12 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,inventory_txn,재고트랜잭션,13 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,inventory_txn,재고트랜잭션,14 ,status,상태,Y,ENUM,2,,,,,,"PENDING(처리대기), COMPLETED(완료), CANCELLED(취소), FAILED(실패)"
+SB,fp_ad_content ,광고-내용,1 ,content_id,콘텐츠ID,Y,CHAR,36,PK,,,,,UUID
+SB,fp_ad_content ,광고-내용,2 ,placement_id,슬롯ID,Y,CHAR,36,FK,,,,,fp_ad_placement
+SB,fp_ad_content ,광고-내용,,store_id,가게ID,Y,CHAR,36,FK,,,,,
+SB,fp_ad_content ,광고-내용,3 ,title,제목,Y,VARCHAR,120,,,,,,운영 명
+SB,fp_ad_content ,광고-내용,4 ,ad_image,광고이미지,Y,MEDIUMBLOB,,,,,,,Imb
+SB,fp_ad_content ,광고-내용,8 ,click_url,클릭URL,N,VARCHAR,255,,,,,,추적 파라미터 포함 허용
+SB,fp_ad_content ,광고-내용,9 ,priority,우선순위,Y,INT,,,,IDX,,,낮을수록 우선(기본100)
+SB,fp_ad_content ,광고-내용,10 ,status,상태,Y,ENUM,,,,IDX,,,"DRAFT,READY,ACTIVE,PAUSED,ENDED"
+SB,fp_ad_content ,광고-내용,11 ,created_at,생성일시,Y,DATETIME,,,,,,,
+SB,fp_ad_content ,광고-내용,12 ,updated_at,수정일시,Y,DATETIME,,,,,,,
+SB,fp_ad_schedule,광고-일정,1 ,schedule_id,스케줄ID,Y,CHAR,36,PK,,,,,UUID
+SB,fp_ad_schedule,광고-일정,2 ,content_id,콘텐츠ID,Y,CHAR,36,,FK,,,,
+SB,fp_ad_schedule,광고-일정,3 ,store_id,가게ID,Y,CHAR,36,FK,,,,,
+SB,fp_ad_schedule,광고-일정,4 ,start_at,시작일시,Y,DATETIME,,,,,,,캠페인 시작
+SB,fp_ad_schedule,광고-일정,5 ,end_at,종료일시,Y,DATETIME,,,,,,,캠페인 종료
+SB,fp_ad_schedule,광고-일정,6 ,time_start,일일시작,N,TIME,,,,,,,예: 16:00:00
+SB,fp_ad_schedule,광고-일정,7 ,time_end,일일종료,N,TIME,,,,,,,예: 18:00:00
+SB,fp_ad_schedule,광고-일정,8 ,dow_mask,요일마스크,N,VARCHAR,20,,,,,,"MON,TUE,..."
+SB,fp_ad_schedule,광고-일정,9 ,timezone,타임존,N,VARCHAR,40,,,,,,Asia/Seoul 권장
+SB,fp_ad_schedule,광고-일정,10 ,status,상태,Y,ENUM,,,,,,,"SCHEDULED,ACTIVE,PAUSED,ENDED"
+SB,fp_ad_schedule,광고-일정,11 ,weight,가중치,N,INT,,,,,,,동일 슬롯 경쟁 시 확률
+SB,fp_ad_target,광고-타겟,1 ,target_id,타깃ID,Y,CHAR,36,PK,,,,,UUID
+SB,fp_ad_target,광고-타겟,2 ,content_id,콘텐츠ID,Y,CHAR,36,,FK,,,,
+SB,fp_ad_target,광고-타겟,3 ,store_id,가게ID,Y,CHAR,36,FK,,,,,
+SB,fp_ad_target,광고-타겟,4 ,os,OS,N,ENUM,,,,,,,"IOS,ANDROID,WEB"
+SB,fp_ad_target,광고-타겟,5 ,app_version_min,최소앱버전,N,VARCHAR,20,,,,,,SemVer
+SB,fp_ad_target,광고-타겟,6 ,app_version_max,최대앱버전,N,VARCHAR,20,,,,,,
+SB,fp_ad_target,광고-타겟,7 ,locale,로케일,N,VARCHAR,10,,,,,,ko-KR 등
+SB,fp_ad_target,광고-타겟,8 ,region,지역코드,N,VARCHAR,10,,,,,,예: KR
+SB,fp_ad_target,광고-타겟,9 ,user_segment,사용자세그먼트,N,VARCHAR,40,,,,,,"예: NEW_USER,VIP"
+SB,fp_ad_target,광고-타겟,10 ,status,상태,Y,ENUM,,,,,,,"ACTIVE,INACTIVE"
+SB,fp_ad_cap,광고-빈도,1 ,cap_id,캡ID,Y,CHAR(36),36,PK,,,,,UUID
+SB,fp_ad_cap,광고-빈도,2 ,content_id,콘텐츠ID,Y,CHAR(36),36,,FK,,,,
+SB,fp_ad_cap,광고-빈도,3 ,store_id,가게ID,Y,CHAR,36,FK,,,,,
+SB,fp_ad_cap,광고-빈도,4 ,max_impressions_total,전체노출한도,N,INT,,,,,,,
+SB,fp_ad_cap,광고-빈도,5 ,max_impressions_per_user_day,1인/일 노출한도,N,INT,,,,,,,
+SB,fp_ad_cap,광고-빈도,6 ,max_clicks_total,전체클릭한도,N,INT,,,,,,,
+SB,fp_ad_cap,광고-빈도,7 ,status,상태,Y,ENUM,,,,,,,"ACTIVE,INACTIVE"
+SB,fp_ad_cap,광고-빈도,8 ,created_at,생성일시,Y,DATETIME,,,,,,,
+SB,fp_ad_cap,광고-빈도,9 ,updated_at,수정일시,Y,DATETIME,,,,,,,
+SB,fp_ad_log,광고-로그,1 ,log_id,로그ID,Y,CHAR(36),36,PK,,,,,UUID
+SB,fp_ad_log,광고-로그,2 ,content_id,콘텐츠ID,Y,CHAR(36),36,,FK,,,,
+SB,fp_ad_log,광고-로그,3 ,store_id,가게ID,Y,CHAR,36,FK,,,,,
+SB,fp_ad_log,광고-로그,4 ,user_id,사용자ID,N,CHAR(36),36,,,,,,익명 가능
+SB,fp_ad_log,광고-로그,5 ,device_id,디바이스ID,N,CHAR(36),36,,,,,,
+SB,fp_ad_log,광고-로그,6 ,action,액션,Y,ENUM,,,,,,,"IMPRESSION,CLICK"
+SB,fp_ad_log,광고-로그,7 ,page,페이지,Y,ENUM,,,,,,,"HOME,WEEKLY_SALE"
+SB,fp_ad_log,광고-로그,8 ,area_key,영역키,Y,ENUM,,,,,,,"HERO,MID_1,MID_2,FOOTER"
+SB,fp_ad_log,광고-로그,9 ,ts,발생일시,Y,DATETIME,,,,,,,
+SB,fp_ad_log,광고-로그,10 ,ip,IP,N,VARCHAR,45,,,,,,
+SB,fp_ad_log,광고-로그,11 ,ua,UserAgent,N,VARCHAR,255,,,,,,
+SB,coupon,쿠폰,1 ,coupon_id,쿠폰ID,Y,CHAR,36,PK,,,UUID(),,
+SB,coupon,쿠폰,2 ,store_id,가게ID,Y,CHAR,36,PK,FK,,,,
+SB,coupon,쿠폰,3 ,code,쿠폰코드,Y,CHAR,36,PK,FK,,UUID(),,
+SB,coupon,쿠폰,4 ,name,쿠폰명,Y,VARCHAR,255,,,,,,
+SB,coupon,쿠폰,5 ,coupon_type,쿠폰유형,Y,ENUM,2,,,,,,"DISCOUNT,SHIPPING_FREE,SIGNUP"
+SB,coupon,쿠폰,6 ,discount_unit,할인단위,Y,ENUM,2,,,,,,"PCT,FIXED"
+SB,coupon,쿠폰,7 ,discount_value,할인값,Y,"DECIMAL(12,2)",13,,,,,,30000
+SB,coupon,쿠폰,8 ,shipping_max_free,배송비무료 최소금액,Y,"DECIMAL(12,2)",13,,,,0,,
+SB,coupon,쿠폰,9 ,min_order_amount,최소주문금액,Y,"DECIMAL(12,2)",13,,,,0,,
+SB,coupon,쿠폰,10 ,valid_from,사용시작일시,Y,DATETIME,8,,,,current_timestamp,,
+SB,coupon,쿠폰,11 ,valid_to,사용종료일시,Y,DATETIME,8,,,,,,
+SB,coupon,쿠폰,12 ,total_issuable,전체발급가능수,Y,INT,4,,,,0,,
+SB,coupon,쿠폰,13 ,per_customer_limit,사용자별발급/사용제한수,Y,INT,4,,,,1,,
+SB,coupon,쿠폰,14 ,stackable,중복사용가능여부,Y,TINYINT,1,,,,0,,
+SB,coupon,쿠폰,15 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,coupon,쿠폰,16 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,coupon,쿠폰,17 ,status,상태,Y,ENUM,2,,,,ACTIVE,,"ISSUED(발급됨), USED(사용됨), EXPIRED(만료), CANCELLED(취소)"
+SB,coupon_issurance,쿠폰발급,1 ,issuance_id,쿠폰발급ID,Y,CHAR,36,PK,,,UUID(),,
+SB,coupon_issurance,쿠폰발급,2 ,coupon_id,쿠폰ID,Y,CHAR,36,,FK,,,,
+SB,coupon_issurance,쿠폰발급,3 ,customer_id,사용자ID,N,CHAR,36,,,,,,개인발급시
+SB,coupon_issurance,쿠폰발급,4 ,issued_at,발급일시,Y,DATETIME,8,,,,current_timestamp,,
+SB,coupon_issurance,쿠폰발급,5 ,expires_at,만료일시,N,DATETIME,8,,,,,,
+SB,coupon_issurance,쿠폰발급,6 ,issued_status,발급상태,Y,ENUM,2,,,,ISSUED,,"ISSUED,USED,EXPIRED,CANCELLED"
+SB,coupon_issurance,쿠폰발급,7 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,coupon_issurance,쿠폰발급,8 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,coupon_issurance,쿠폰발급,9 ,status,상태,Y,ENUM,2,,,,,,
+SB,coupon_redemption,쿠폰사용,1 ,redemption_id,쿠폰사용ID,Y,CHAR,36,PK,,,UUID(),,
+SB,coupon_redemption,쿠폰사용,2 ,issuance_id,쿠폰발급ID,Y,CHAR,36,,FK,,,,
+SB,coupon_redemption,쿠폰사용,3 ,order_id,주문ID,Y,CHAR,36,,FK,,,,
+SB,coupon_redemption,쿠폰사용,4 ,used_at,사용일시,Y,DATETIME,8,,,,current_timestamp,,
+SB,coupon_redemption,쿠폰사용,5 ,discount_amount,할인금액,Y,"DECIMAL(12,2)",13,,,,,,
+SB,coupon_redemption,쿠폰사용,6 ,created_at,생성일,Y,DATETIME,8,,,,,,
+SB,coupon_redemption,쿠폰사용,7 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+SB,coupon_redemption,쿠폰사용,8 ,status,상태,Y,ENUM,2,,,,,,"APPLIED(적용됨), REVOKED(취소됨), FAILED(실패)"

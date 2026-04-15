@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,10 +30,13 @@ import { DomainBadge } from "@/components/admin/domain/status-badge-map";
 import { PriceDisplay } from "@/components/admin/domain/price-display";
 import { CategorySelect, ITEM_CATEGORIES } from "@/components/admin/domain/category-select";
 import { ImageUploader } from "@/components/admin/image-uploader";
-import { MOCK_ITEMS } from "@/lib/mocks/item";
+import { createItem, updateItem, deleteItem } from "@/lib/actions/domain/item.actions";
+import { uploadImage } from "@/lib/supabase/storage";
 import type { ItemRow } from "@/lib/types/domain/item";
+import type { PaginatedResult } from "@/lib/types/api";
 import { Plus } from "lucide-react";
 
+// UI 전용 로컬 Zod 스키마 (Server Action 스키마와 역할이 다름)
 const itemFormSchema = z.object({
   name: z.string().min(1, "상품명을 입력하세요"),
   category_code_value: z.string().min(1, "카테고리를 선택하세요"),
@@ -60,11 +64,18 @@ const columns: DataTableColumn<ItemRow>[] = [
   },
 ];
 
-export function ItemsClient() {
+interface ItemsClientProps {
+  initialData: PaginatedResult<ItemRow>;
+}
+
+export function ItemsClient({ initialData }: ItemsClientProps) {
+  const router = useRouter();
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ItemRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ItemRow | null>(null);
+  // 업로드할 파일 객체를 ref로 관리 (form 값은 URL 문자열)
+  const pendingFileRef = useRef<File | null>(null);
 
   const form = useForm<ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
@@ -78,12 +89,14 @@ export function ItemsClient() {
     },
   });
 
+  // 카테고리 필터는 클라이언트 측에서 적용 (서버 데이터는 이미 paginate로 조회됨)
   const filteredItems =
     categoryFilter === "ALL"
-      ? MOCK_ITEMS
-      : MOCK_ITEMS.filter((item) => item.category_code_value === categoryFilter);
+      ? initialData.data
+      : initialData.data.filter((item) => item.category_code_value === categoryFilter);
 
   const openRegister = () => {
+    pendingFileRef.current = null;
     form.reset({
       name: "",
       category_code_value: "",
@@ -96,6 +109,7 @@ export function ItemsClient() {
   };
 
   const openEdit = (row: ItemRow) => {
+    pendingFileRef.current = null;
     form.reset({
       name: row.name ?? "",
       category_code_value: row.category_code_value ?? "",
@@ -107,17 +121,103 @@ export function ItemsClient() {
     setEditTarget(row);
   };
 
-  const handleSubmit = (values: ItemFormValues) => {
-    console.log("상품 저장:", values);
-    toast.success(editTarget ? "상품 정보가 수정되었습니다." : "상품이 등록되었습니다.");
-    setRegisterOpen(false);
-    setEditTarget(null);
-    form.reset();
+  /**
+   * ImageUploader의 onChange는 dataUrl 문자열을 반환
+   * 실제 파일 업로드는 submit 시점에 pendingFileRef를 통해 처리
+   */
+  const handleImageChange = (dataUrl: string | null) => {
+    form.setValue("item_picture_url", dataUrl);
+    // dataUrl이 있으면 File 객체로 변환하여 ref에 저장
+    if (dataUrl && dataUrl.startsWith("data:")) {
+      // base64 dataUrl → File 변환
+      fetch(dataUrl)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const ext = blob.type.split("/")[1] ?? "jpg";
+          const file = new File([blob], `image.${ext}`, { type: blob.type });
+          pendingFileRef.current = file;
+        })
+        .catch(() => {
+          pendingFileRef.current = null;
+        });
+    } else {
+      pendingFileRef.current = null;
+    }
   };
 
-  const handleDelete = () => {
-    toast.success(`'${deleteTarget?.name}' 상품이 삭제되었습니다.`);
+  const handleSubmit = async (values: ItemFormValues) => {
+    let imageUrl: string | null = values.item_picture_url;
+
+    // dataUrl 형태인 경우 Storage 업로드
+    if (pendingFileRef.current) {
+      try {
+        imageUrl = await uploadImage("item-images", pendingFileRef.current);
+      } catch (err) {
+        toast.error("이미지 업로드 중 오류가 발생했습니다.");
+        console.error(err);
+        return;
+      }
+    } else if (imageUrl?.startsWith("data:")) {
+      // dataUrl이지만 File 변환 전이면 업로드 불가 — 경고
+      toast.error("이미지 처리 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
+    if (editTarget) {
+      // 상품 수정
+      const result = await updateItem({
+        item_id: editTarget.item_id,
+        name: values.name,
+        category_code_value: values.category_code_value,
+        list_price: values.list_price,
+        sale_price: values.sale_price,
+        status: values.status,
+        item_picture_url: imageUrl,
+      });
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      toast.success("상품 정보가 수정되었습니다.");
+      setEditTarget(null);
+    } else {
+      // 상품 등록
+      const result = await createItem({
+        store_id: "00000000-0000-0000-0000-000000000000",
+        sku: `SKU-${Date.now()}`,
+        category_code_value: values.category_code_value,
+        category_name:
+          ITEM_CATEGORIES.find((c) => c.value === values.category_code_value)?.label ??
+          values.category_code_value,
+        name: values.name,
+        list_price: values.list_price,
+        sale_price: values.sale_price,
+        item_picture_url: imageUrl,
+        status: values.status,
+      });
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      toast.success("상품이 등록되었습니다.");
+      setRegisterOpen(false);
+    }
+    pendingFileRef.current = null;
+    form.reset();
+    router.refresh();
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const result = await deleteItem({ item_id: deleteTarget.item_id });
+    if (!result.ok) {
+      toast.error(result.error.message);
+      setDeleteTarget(null);
+      return;
+    }
+    toast.success(`'${deleteTarget.name}' 상품이 삭제되었습니다.`);
     setDeleteTarget(null);
+    router.refresh();
   };
 
   const isDialogOpen = registerOpen || editTarget !== null;
@@ -155,6 +255,7 @@ export function ItemsClient() {
           if (!open) {
             setRegisterOpen(false);
             setEditTarget(null);
+            pendingFileRef.current = null;
           }
         }}
         title={editTarget ? "상품 수정" : "상품 등록"}
@@ -173,7 +274,7 @@ export function ItemsClient() {
                   <FormControl>
                     <ImageUploader
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={handleImageChange}
                       sizeHint="권장: 400×400px"
                     />
                   </FormControl>
@@ -226,7 +327,12 @@ export function ItemsClient() {
                   <FormItem>
                     <FormLabel>정가</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="0" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -239,7 +345,12 @@ export function ItemsClient() {
                   <FormItem>
                     <FormLabel>판매가 *</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="0" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -11,29 +11,29 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
-import { MOCK_STORE_FULFILLMENTS, MOCK_SELLERS } from "@/lib/mocks/store";
+import type { StoreFulfillmentRow, SellerRow } from "@/lib/types/domain/store";
+import type { Database } from "@/lib/supabase/database.types";
 
-// 더미 퀵 정책 데이터
-const MOCK_QUICK_POLICIES = [
-  { id: "qp-001", slot_size_min: 30, max_orders_per_slot: 10, cutoff_min: 60, status: "ACTIVE" },
-  { id: "qp-002", slot_size_min: 60, max_orders_per_slot: 15, cutoff_min: 120, status: "INACTIVE" },
-];
+// 바로퀵 관련 타입 정의
+type StoreQuickPolicyRow = Database["public"]["Tables"]["store_quick_policy"]["Row"];
+type StoreQuickTimeslotRow = Database["public"]["Tables"]["store_quick_timeslot"]["Row"];
+type StoreQuickSlotUsageRow = Database["public"]["Tables"]["store_quick_slot_usage"]["Row"];
 
-// 더미 운행표 데이터
-const MOCK_TIMESLOTS = [
-  { id: "ts-001", dow: "MON-FRI", time_start: "09:00", time_end: "21:00", status: "ACTIVE" },
-  { id: "ts-002", dow: "SAT-SUN", time_start: "10:00", time_end: "20:00", status: "ACTIVE" },
-];
+interface StoreInfoClientProps {
+  fulfillments: StoreFulfillmentRow[];
+  sellers: SellerRow[];
+  quickPolicies: StoreQuickPolicyRow[];
+  timeslots: StoreQuickTimeslotRow[];
+  slotUsages: StoreQuickSlotUsageRow[];
+}
 
-// 더미 슬롯 카운트 데이터
-const MOCK_SLOT_COUNTS = [
-  { slot: "09:00-10:00", capacity: 10, reserved: 7, available: 3 },
-  { slot: "10:00-11:00", capacity: 10, reserved: 10, available: 0 },
-  { slot: "11:00-12:00", capacity: 10, reserved: 4, available: 6 },
-  { slot: "14:00-15:00", capacity: 15, reserved: 12, available: 3 },
-];
-
-export function StoreInfoClient() {
+export function StoreInfoClient({
+  fulfillments,
+  sellers,
+  quickPolicies,
+  timeslots,
+  slotUsages,
+}: StoreInfoClientProps) {
   return (
     <div className="p-6">
       <Tabs defaultValue="fulfillment">
@@ -57,24 +57,32 @@ export function StoreInfoClient() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_STORE_FULFILLMENTS.map((sf) => (
-                  <TableRow key={sf.id}>
-                    <TableCell>{sf.fulfillment_type}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          sf.active
-                            ? "text-primary border-primary/30 bg-primary-light"
-                            : "text-text-placeholder"
-                        }
-                      >
-                        {sf.active ? "활성" : "비활성"}
-                      </Badge>
+                {fulfillments.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-text-placeholder py-8 text-center">
+                      배송정보가 없습니다.
                     </TableCell>
-                    <TableCell>{sf.created_at?.slice(0, 10) ?? "-"}</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  fulfillments.map((sf) => (
+                    <TableRow key={sf.id}>
+                      <TableCell>{sf.fulfillment_type}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            sf.active
+                              ? "text-primary border-primary/30 bg-primary-light"
+                              : "text-text-placeholder"
+                          }
+                        >
+                          {sf.active ? "활성" : "비활성"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{sf.created_at?.slice(0, 10) ?? "-"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -94,26 +102,34 @@ export function StoreInfoClient() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_SELLERS.map((seller) => (
-                  <TableRow key={seller.seller_id}>
-                    <TableCell>{seller.name}</TableCell>
-                    <TableCell>{seller.email}</TableCell>
-                    <TableCell>{seller.phone ?? "-"}</TableCell>
-                    <TableCell>{seller.role}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          seller.is_active === "ACTIVE"
-                            ? "text-primary border-primary/30 bg-primary-light"
-                            : "text-text-placeholder"
-                        }
-                      >
-                        {seller.is_active === "ACTIVE" ? "활성" : "비활성"}
-                      </Badge>
+                {sellers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-text-placeholder py-8 text-center">
+                      판매원이 없습니다.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  sellers.map((seller) => (
+                    <TableRow key={seller.seller_id}>
+                      <TableCell>{seller.name}</TableCell>
+                      <TableCell>{seller.email}</TableCell>
+                      <TableCell>{seller.phone ?? "-"}</TableCell>
+                      <TableCell>{seller.role}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            seller.is_active === "ACTIVE"
+                              ? "text-primary border-primary/30 bg-primary-light"
+                              : "text-text-placeholder"
+                          }
+                        >
+                          {seller.is_active === "ACTIVE" ? "활성" : "비활성"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -125,26 +141,34 @@ export function StoreInfoClient() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-panel">
-                  <TableHead>슬롯 크기(분)</TableHead>
-                  <TableHead>슬롯당 최대 주문</TableHead>
-                  <TableHead>마감 선행시간(분)</TableHead>
+                  <TableHead>최소 주문 금액</TableHead>
+                  <TableHead>일일 운행 횟수</TableHead>
+                  <TableHead>슬롯당 용량</TableHead>
                   <TableHead>상태</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_QUICK_POLICIES.map((qp) => (
-                  <TableRow key={qp.id}>
-                    <TableCell>{qp.slot_size_min}분</TableCell>
-                    <TableCell>{qp.max_orders_per_slot}건</TableCell>
-                    <TableCell>{qp.cutoff_min}분</TableCell>
-                    <TableCell>
-                      <DomainBadge
-                        type="store"
-                        status={qp.status === "ACTIVE" ? "ACTIVE" : "INACTIVE"}
-                      />
+                {quickPolicies.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-text-placeholder py-8 text-center">
+                      바로퀵 정책이 없습니다.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  quickPolicies.map((qp) => (
+                    <TableRow key={qp.policy_id}>
+                      <TableCell>{qp.min_order_amount.toLocaleString()}원</TableCell>
+                      <TableCell>{qp.daily_runs}회</TableCell>
+                      <TableCell>{qp.capacity_per_slot}건</TableCell>
+                      <TableCell>
+                        <DomainBadge
+                          type="store"
+                          status={qp.status === "ACTIVE" ? "ACTIVE" : "INACTIVE"}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -156,26 +180,36 @@ export function StoreInfoClient() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-panel">
+                  <TableHead>라벨</TableHead>
+                  <TableHead>출발 시간</TableHead>
+                  <TableHead>주문 마감(분 전)</TableHead>
                   <TableHead>운행 요일</TableHead>
-                  <TableHead>시작 시간</TableHead>
-                  <TableHead>종료 시간</TableHead>
                   <TableHead>상태</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_TIMESLOTS.map((ts) => (
-                  <TableRow key={ts.id}>
-                    <TableCell>{ts.dow}</TableCell>
-                    <TableCell>{ts.time_start}</TableCell>
-                    <TableCell>{ts.time_end}</TableCell>
-                    <TableCell>
-                      <DomainBadge
-                        type="store"
-                        status={ts.status === "ACTIVE" ? "ACTIVE" : "INACTIVE"}
-                      />
+                {timeslots.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-text-placeholder py-8 text-center">
+                      운행표가 없습니다.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  timeslots.map((ts) => (
+                    <TableRow key={ts.slot_id}>
+                      <TableCell>{ts.label}</TableCell>
+                      <TableCell>{ts.depart_time}</TableCell>
+                      <TableCell>{ts.order_cutoff_min}분</TableCell>
+                      <TableCell>{ts.dow_mask ?? "-"}</TableCell>
+                      <TableCell>
+                        <DomainBadge
+                          type="store"
+                          status={ts.status === "ACTIVE" ? "ACTIVE" : "INACTIVE"}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -187,29 +221,31 @@ export function StoreInfoClient() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-panel">
-                  <TableHead>슬롯</TableHead>
-                  <TableHead>총 용량</TableHead>
+                  <TableHead>출발 날짜</TableHead>
+                  <TableHead>출발 시간</TableHead>
                   <TableHead>예약 건수</TableHead>
-                  <TableHead>잔여</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {MOCK_SLOT_COUNTS.map((sc) => (
-                  <TableRow key={sc.slot}>
-                    <TableCell>{sc.slot}</TableCell>
-                    <TableCell>{sc.capacity}</TableCell>
-                    <TableCell>{sc.reserved}</TableCell>
-                    <TableCell>
-                      <span
-                        className={
-                          sc.available === 0 ? "text-alert-red font-medium" : "text-primary"
-                        }
-                      >
-                        {sc.available}
-                      </span>
+                {slotUsages.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-text-placeholder py-8 text-center">
+                      슬롯 사용량이 없습니다.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  slotUsages.map((su) => (
+                    <TableRow key={su.usage_id}>
+                      <TableCell>{su.depart_date}</TableCell>
+                      <TableCell>{su.depart_time}</TableCell>
+                      <TableCell>
+                        <span className={su.reserved_count === 0 ? "text-primary" : ""}>
+                          {su.reserved_count}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

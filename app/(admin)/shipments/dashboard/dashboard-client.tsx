@@ -1,14 +1,25 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
-import { MOCK_DASHBOARD_STATS, MOCK_SHIPMENT_EVENTS, MOCK_SHIPMENTS } from "@/lib/mocks/shipment";
+import { useRealtimeChannel } from "@/lib/hooks/use-realtime-channel";
 import { Package, Truck, CheckCircle, Activity } from "lucide-react";
+import type { DashboardStats } from "@/app/(admin)/shipments/dashboard/page";
+import type { ShipmentEventRow } from "@/lib/types/domain/shipment";
 
-const STATS = [
+interface StatCard {
+  key: keyof DashboardStats;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  bg: string;
+}
+
+const STAT_CARDS: StatCard[] = [
   {
     key: "totalOrders",
     label: "총 주문",
-    value: MOCK_DASHBOARD_STATS.totalOrders,
     icon: Package,
     color: "text-blue-600",
     bg: "bg-blue-50",
@@ -16,7 +27,6 @@ const STATS = [
   {
     key: "delivered",
     label: "배송 완료",
-    value: MOCK_DASHBOARD_STATS.delivered,
     icon: CheckCircle,
     color: "text-primary",
     bg: "bg-primary-light",
@@ -24,7 +34,6 @@ const STATS = [
   {
     key: "inFulfillment",
     label: "피킹/패킹",
-    value: MOCK_DASHBOARD_STATS.inFulfillment,
     icon: Activity,
     color: "text-yellow-600",
     bg: "bg-yellow-50",
@@ -32,15 +41,30 @@ const STATS = [
   {
     key: "inDelivery",
     label: "배송중",
-    value: MOCK_DASHBOARD_STATS.inDelivery,
     icon: Truck,
     color: "text-orange-600",
     bg: "bg-orange-50",
   },
 ];
 
-export function DashboardClient() {
-  const sortedEvents = [...MOCK_SHIPMENT_EVENTS].sort(
+interface DashboardClientProps {
+  initialStats: DashboardStats;
+  initialEvents: ShipmentEventRow[];
+}
+
+export function DashboardClient({ initialStats, initialEvents }: DashboardClientProps) {
+  const router = useRouter();
+  const [events, setEvents] = useState<ShipmentEventRow[]>(initialEvents);
+
+  // Realtime: shipment_event 테이블 INSERT 구독
+  useRealtimeChannel("shipment_event", (payload) => {
+    // 새 이벤트를 목록 앞에 추가
+    setEvents((prev) => [payload.new, ...prev].slice(0, 50));
+    // 통계 카드 최신화를 위해 서버 데이터 갱신
+    router.refresh();
+  });
+
+  const sortedEvents = [...events].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
@@ -48,7 +72,7 @@ export function DashboardClient() {
     <div className="space-y-6 p-6">
       {/* 현황 카드 4종 */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {STATS.map((stat) => {
+        {STAT_CARDS.map((stat) => {
           const Icon = stat.icon;
           return (
             <div
@@ -61,7 +85,7 @@ export function DashboardClient() {
                 <Icon className="h-5 w-5" />
               </div>
               <p className="text-text-placeholder text-sm">{stat.label}</p>
-              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-2xl font-bold">{initialStats[stat.key]}</p>
             </div>
           );
         })}
@@ -70,25 +94,26 @@ export function DashboardClient() {
       {/* 배송 이벤트 타임라인 */}
       <div>
         <h3 className="mb-4 text-sm font-semibold">배송 이벤트 타임라인</h3>
-        <div className="space-y-3">
-          {sortedEvents.map((evt) => {
-            const shipment = MOCK_SHIPMENTS.find((s) => s.shipment_id === evt.shipment_id);
-            return (
+        {sortedEvents.length === 0 ? (
+          <p className="text-text-placeholder text-sm">배송 이벤트가 없습니다.</p>
+        ) : (
+          <div className="space-y-3">
+            {sortedEvents.map((evt) => (
               <div key={evt.event_id} className="flex items-start gap-4">
                 <div className="text-text-placeholder w-32 pt-0.5 text-xs whitespace-nowrap">
                   {evt.created_at.slice(0, 16).replace("T", " ")}
                 </div>
                 <div className="border-separator bg-panel flex-1 rounded border px-3 py-2">
                   <div className="flex items-center gap-2">
-                    <DomainBadge type="shipment" status={shipment?.status ?? ""} />
+                    <DomainBadge type="shipment" status="OUT_FOR_DELIVERY" />
                     <span className="text-sm font-medium">{evt.event_code}</span>
                   </div>
-                  <p className="text-text-placeholder mt-1 text-xs">{evt.memo}</p>
+                  <p className="text-text-placeholder mt-1 text-xs">{evt.memo ?? "-"}</p>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

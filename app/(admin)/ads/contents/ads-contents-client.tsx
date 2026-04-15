@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,11 +16,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { LayerDialog } from "@/components/admin/layer-dialog";
 import { ImageUploader } from "@/components/admin/image-uploader";
-import { MOCK_AD_CONTENTS } from "@/lib/mocks/ad";
+import { createAdContent } from "@/lib/actions/domain/ad.actions";
+import { uploadImage } from "@/lib/supabase/storage";
 import type { AdContentRow } from "@/lib/types/domain/advertisement";
+import type { PaginatedResult } from "@/lib/types/api";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 
@@ -31,10 +41,15 @@ const AD_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   ENDED: { label: "종료", className: "bg-alert-red-bg text-alert-red border-alert-red/30" },
 };
 
+// UI용 폼 스키마 (placement_id, store_id는 UUID 필수)
 const contentFormSchema = z.object({
+  placement_id: z.string().min(1, "게재 위치 ID를 입력하세요"),
+  store_id: z.string().min(1, "스토어 ID를 입력하세요"),
   title: z.string().min(1, "제목을 입력하세요"),
   click_url: z.string().optional(),
   ad_image: z.string().nullable(),
+  status: z.enum(["DRAFT", "READY", "ACTIVE", "PAUSED", "ENDED"]),
+  priority: z.number().int().min(0),
 });
 
 type ContentFormValues = z.infer<typeof contentFormSchema>;
@@ -58,26 +73,67 @@ const columns: DataTableColumn<AdContentRow>[] = [
   { key: "click_url", header: "URL", render: (row) => row.click_url ?? "-" },
 ];
 
-export function AdsContentsClient() {
+interface AdsContentsClientProps {
+  initialData: PaginatedResult<AdContentRow>;
+}
+
+export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
+  const router = useRouter();
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const form = useForm<ContentFormValues>({
     resolver: zodResolver(contentFormSchema),
-    defaultValues: { title: "", click_url: "", ad_image: null },
+    defaultValues: {
+      placement_id: "",
+      store_id: "",
+      title: "",
+      click_url: "",
+      ad_image: null,
+      status: "DRAFT",
+      priority: 0,
+    },
   });
 
-  const handleSubmit = (values: ContentFormValues) => {
-    console.log("광고 콘텐츠 저장:", values);
-    toast.success("광고 콘텐츠가 등록되었습니다.");
-    setRegisterOpen(false);
-    form.reset();
+  const handleSubmit = async (values: ContentFormValues) => {
+    let imageUrl: string | null = values.ad_image;
+
+    // 이미지 파일이 있으면 Storage에 업로드
+    if (imageFile) {
+      try {
+        imageUrl = await uploadImage("ad-images", imageFile);
+      } catch {
+        toast.error("이미지 업로드에 실패했습니다.");
+        return;
+      }
+    }
+
+    const result = await createAdContent({
+      placement_id: values.placement_id,
+      store_id: values.store_id,
+      title: values.title,
+      click_url: values.click_url || null,
+      ad_image: imageUrl,
+      priority: values.priority,
+      status: values.status,
+    });
+
+    if (result.ok) {
+      toast.success("광고 콘텐츠가 등록되었습니다.");
+      setRegisterOpen(false);
+      setImageFile(null);
+      form.reset();
+      router.refresh();
+    } else {
+      toast.error(result.error.message ?? "등록 중 오류가 발생했습니다.");
+    }
   };
 
   return (
     <div className="p-6">
       <DataTable
         columns={columns}
-        data={MOCK_AD_CONTENTS}
+        data={initialData.data}
         rowKey={(row) => row.content_id}
         searchPlaceholder="제목 검색"
         toolbarActions={
@@ -108,9 +164,38 @@ export function AdsContentsClient() {
                   <FormControl>
                     <ImageUploader
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(url) => {
+                        field.onChange(url);
+                      }}
+                      onFileSelect={(file) => setImageFile(file)}
                       sizeHint="권장: 1200×400px"
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="placement_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>게재 위치 ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="게재 위치 ID" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="store_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>스토어 ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="스토어 UUID" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -142,6 +227,50 @@ export function AdsContentsClient() {
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>상태</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="DRAFT">초안</SelectItem>
+                        <SelectItem value="READY">준비</SelectItem>
+                        <SelectItem value="ACTIVE">활성</SelectItem>
+                        <SelectItem value="PAUSED">일시정지</SelectItem>
+                        <SelectItem value="ENDED">종료</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>우선순위</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </form>
         </Form>
       </LayerDialog>

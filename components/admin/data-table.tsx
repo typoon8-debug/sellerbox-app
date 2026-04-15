@@ -57,6 +57,8 @@ interface DataTableProps<T> {
   loading?: boolean;
   showRowActions?: boolean;
   emptyMessage?: string;
+  /** 행별 추가 CSS 클래스 (예: 안전재고 경고 강조) */
+  rowClassName?: (row: T) => string;
 }
 
 export function DataTable<T>({
@@ -77,6 +79,7 @@ export function DataTable<T>({
   loading = false,
   showRowActions = true,
   emptyMessage = "데이터가 없습니다.",
+  rowClassName,
 }: DataTableProps<T>) {
   const isControlled = searchValue !== undefined;
   const [searchInput, setSearchInput] = useState("");
@@ -184,7 +187,11 @@ export function DataTable<T>({
                 data.map((row) => (
                   <TableRow
                     key={rowKey(row)}
-                    className={onRowClick ? "cursor-pointer" : undefined}
+                    className={
+                      [onRowClick ? "cursor-pointer" : "", rowClassName ? rowClassName(row) : ""]
+                        .filter(Boolean)
+                        .join(" ") || undefined
+                    }
                     onClick={() => onRowClick?.(row)}
                   >
                     {columns.map((col) => (

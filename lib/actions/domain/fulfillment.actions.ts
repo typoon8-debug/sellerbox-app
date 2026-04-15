@@ -5,11 +5,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { PickingTaskRepository } from "@/lib/repositories/picking-task.repository";
 import { PickingItemRepository } from "@/lib/repositories/picking-item.repository";
 import { PackingTaskRepository } from "@/lib/repositories/packing-task.repository";
+import { LabelRepository } from "@/lib/repositories/label.repository";
 import {
+  getPickingItemsSchema,
   startPickingSchema,
   completePickingSchema,
   completePackingSchema,
+  updateLabelPrintedAtSchema,
 } from "@/lib/schemas/domain/fulfillment.schema";
+
+/** 특정 피킹 작업의 항목 목록 조회 */
+export const getPickingItems = withAction(getPickingItemsSchema, async ({ task_id }) => {
+  const supabase = createAdminClient();
+  const repo = new PickingItemRepository(supabase);
+  return repo.findByTaskId(task_id);
+});
 
 /** 피킹 시작 (CREATED → PICKING) */
 export const startPicking = withAction(
@@ -65,4 +75,17 @@ export const completePacking = withAction(
     });
   },
   { action: "UPDATE", resource: "PACKING_TASK" }
+);
+
+/** 라벨 출력 시각 갱신 */
+export const updateLabelPrintedAt = withAction(
+  updateLabelPrintedAtSchema,
+  async ({ label_id }) => {
+    const supabase = createAdminClient();
+    const repo = new LabelRepository(supabase);
+    return repo.update(label_id, {
+      printed_at: new Date().toISOString(),
+    });
+  },
+  { action: "UPDATE", resource: "LABEL" }
 );

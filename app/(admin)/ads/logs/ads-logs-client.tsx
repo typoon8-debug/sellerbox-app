@@ -1,10 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { DateRangePicker } from "@/components/admin/domain/date-range-picker";
-import { MOCK_AD_LOGS } from "@/lib/mocks/ad";
 import type { AdLogRow } from "@/lib/types/domain/advertisement";
+import type { PaginatedResult } from "@/lib/types/api";
 import { Badge } from "@/components/ui/badge";
 
 const ACTION_CONFIG: Record<string, { label: string; className: string }> = {
@@ -37,24 +46,98 @@ const columns: DataTableColumn<AdLogRow>[] = [
   },
 ];
 
-export function AdsLogsClient() {
+interface AdsLogsClientProps {
+  initialData: PaginatedResult<AdLogRow>;
+  initialContentId: string;
+  initialAction: string;
+}
+
+export function AdsLogsClient({
+  initialData,
+  initialContentId,
+  initialAction,
+}: AdsLogsClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [contentId, setContentId] = useState(initialContentId);
+  const [actionFilter, setActionFilter] = useState(initialAction);
+
+  // 필터 변경 시 URL 파라미터 업데이트 → 서버 재조회
+  const applyFilters = (
+    newContentId: string,
+    newAction: string,
+    newDateFrom?: Date,
+    newDateTo?: Date
+  ) => {
+    startTransition(() => {
+      const params = new URLSearchParams();
+      if (newContentId) params.set("content_id", newContentId);
+      if (newAction !== "ALL") params.set("action", newAction);
+      if (newDateFrom) params.set("date_from", newDateFrom.toISOString().slice(0, 10));
+      if (newDateTo) params.set("date_to", newDateTo.toISOString().slice(0, 10));
+      router.push(`?${params.toString()}`);
+    });
+  };
+
+  const handleContentIdChange = (value: string) => {
+    setContentId(value);
+  };
+
+  const handleContentIdSearch = () => {
+    applyFilters(contentId, actionFilter, dateFrom, dateTo);
+  };
+
+  const handleActionChange = (value: string) => {
+    setActionFilter(value);
+    applyFilters(contentId, value, dateFrom, dateTo);
+  };
+
+  const handleDateFromChange = (date: Date | undefined) => {
+    setDateFrom(date);
+    applyFilters(contentId, actionFilter, date, dateTo);
+  };
+
+  const handleDateToChange = (date: Date | undefined) => {
+    setDateTo(date);
+    applyFilters(contentId, actionFilter, dateFrom, date);
+  };
 
   return (
-    <div className="p-6">
-      <div className="mb-4">
+    <div className="space-y-4 p-6">
+      {/* 필터 영역 */}
+      <div className="flex flex-wrap items-center gap-3">
         <DateRangePicker
           from={dateFrom}
           to={dateTo}
-          onFromChange={setDateFrom}
-          onToChange={setDateTo}
+          onFromChange={handleDateFromChange}
+          onToChange={handleDateToChange}
         />
+        <div className="flex items-center gap-2">
+          <Input
+            className="h-8 w-48 text-sm"
+            placeholder="콘텐츠 ID"
+            value={contentId}
+            onChange={(e) => handleContentIdChange(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleContentIdSearch()}
+          />
+        </div>
+        <Select value={actionFilter} onValueChange={handleActionChange} disabled={isPending}>
+          <SelectTrigger className="h-8 w-32">
+            <SelectValue placeholder="액션 유형" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">전체</SelectItem>
+            <SelectItem value="IMPRESSION">노출</SelectItem>
+            <SelectItem value="CLICK">클릭</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <DataTable
         columns={columns}
-        data={MOCK_AD_LOGS}
+        data={initialData.data}
         rowKey={(row) => row.log_id}
         searchPlaceholder="콘텐츠 ID·사용자 ID 검색"
         showRowActions={false}

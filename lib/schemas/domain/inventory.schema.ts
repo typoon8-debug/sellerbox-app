@@ -10,3 +10,10 @@ export const adjustInventorySchema = z.object({
 });
 
 export type AdjustInventoryInput = z.infer<typeof adjustInventorySchema>;
+
+/** 트랜잭션 이력 조회 스키마 */
+export const getInventoryTxnListSchema = z.object({
+  inventory_id: z.string().uuid("올바른 재고 ID를 입력해 주세요."),
+});
+
+export type GetInventoryTxnListInput = z.infer<typeof getInventoryTxnListSchema>;

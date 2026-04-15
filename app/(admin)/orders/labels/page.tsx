@@ -1,8 +1,16 @@
 // F005: 라벨 관리
 import { PageTitleBar } from "@/components/contents/page-title-bar";
 import { LabelsClient } from "@/app/(admin)/orders/labels/labels-client";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { LabelRepository } from "@/lib/repositories/label.repository";
 
-export default function OrdersLabelsPage() {
+export default async function OrdersLabelsPage() {
+  const supabase = createAdminClient();
+  const repo = new LabelRepository(supabase);
+
+  // 라벨 전체 조회
+  const labels = await repo.findAll({ sortBy: "label_id", sortOrder: "desc" });
+
   return (
     <div>
       <PageTitleBar
@@ -10,7 +18,7 @@ export default function OrdersLabelsPage() {
         screenNumber="31003"
         breadcrumbs={[{ label: "주문 처리" }, { label: "라벨 관리" }]}
       />
-      <LabelsClient />
+      <LabelsClient initialData={labels} />
     </div>
   );
 }

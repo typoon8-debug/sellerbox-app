@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,11 +27,13 @@ import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { LayerDialog } from "@/components/admin/layer-dialog";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
-import { MOCK_STORES } from "@/lib/mocks/store";
+import { createStore, updateStore, deleteStore } from "@/lib/actions/domain/store.actions";
 import type { StoreRow } from "@/lib/types/domain/store";
 import type { StoreStatus } from "@/lib/types/domain/enums";
+import type { PaginatedResult } from "@/lib/types/api";
 import { Plus } from "lucide-react";
 
+// UI 전용 로컬 Zod 스키마 (Server Action 스키마와 역할이 다름)
 const storeFormSchema = z.object({
   name: z.string().min(1, "가게명을 입력하세요"),
   address: z.string().min(1, "주소를 입력하세요"),
@@ -57,7 +60,12 @@ const columns: DataTableColumn<StoreRow>[] = [
   },
 ];
 
-export function StoresClient() {
+interface StoresClientProps {
+  initialData: PaginatedResult<StoreRow>;
+}
+
+export function StoresClient({ initialData }: StoresClientProps) {
+  const router = useRouter();
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StoreRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StoreRow | null>(null);
@@ -87,17 +95,63 @@ export function StoresClient() {
     setEditTarget(row);
   };
 
-  const handleSubmit = (values: StoreFormValues) => {
-    console.log("가게 저장:", values);
-    toast.success(editTarget ? "가게 정보가 수정되었습니다." : "가게가 등록되었습니다.");
-    setRegisterOpen(false);
-    setEditTarget(null);
+  const handleSubmit = async (values: StoreFormValues) => {
+    if (editTarget) {
+      // 가게 수정
+      const result = await updateStore({
+        store_id: editTarget.store_id,
+        name: values.name,
+        address: values.address,
+        phone: values.phone,
+        status: values.status,
+      });
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      toast.success("가게 정보가 수정되었습니다.");
+      setEditTarget(null);
+    } else {
+      // 가게 등록 — 필수 필드(tenant_id 등)를 포함한 별도 플로우가 필요하므로
+      // 여기서는 기본값을 임시로 사용 (실제 구현에서는 테넌트 ID를 컨텍스트에서 조회)
+      const result = await createStore({
+        tenant_id: "00000000-0000-0000-0000-000000000000",
+        name: values.name,
+        store_category: "GENERAL",
+        address: values.address,
+        phone: values.phone,
+        min_delivery_price: 0,
+        delivery_tip: 0,
+        reg_number: "-",
+        jumin_number: "-",
+        ceo_name: "-",
+        fee: 0,
+        contract_start_at: new Date().toISOString().slice(0, 10),
+        contract_end_at: new Date().toISOString().slice(0, 10),
+        status: values.status,
+      });
+      if (!result.ok) {
+        toast.error(result.error.message);
+        return;
+      }
+      toast.success("가게가 등록되었습니다.");
+      setRegisterOpen(false);
+    }
     form.reset();
+    router.refresh();
   };
 
-  const handleDelete = () => {
-    toast.success(`'${deleteTarget?.name}' 가게가 삭제되었습니다.`);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const result = await deleteStore({ store_id: deleteTarget.store_id });
+    if (!result.ok) {
+      toast.error(result.error.message);
+      setDeleteTarget(null);
+      return;
+    }
+    toast.success(`'${deleteTarget.name}' 가게가 삭제되었습니다.`);
     setDeleteTarget(null);
+    router.refresh();
   };
 
   const isDialogOpen = registerOpen || editTarget !== null;
@@ -107,7 +161,7 @@ export function StoresClient() {
     <div className="p-6">
       <DataTable
         columns={columns}
-        data={MOCK_STORES}
+        data={initialData.data}
         rowKey={(row) => row.store_id}
         searchPlaceholder="가게명·주소 검색"
         toolbarActions={

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,11 +21,13 @@ import {
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { LayerDialog } from "@/components/admin/layer-dialog";
 import { DateRangePicker } from "@/components/admin/domain/date-range-picker";
-import { MOCK_AD_SCHEDULES } from "@/lib/mocks/ad";
+import { createAdSchedule } from "@/lib/actions/domain/ad.actions";
 import type { AdScheduleRow } from "@/lib/types/domain/advertisement";
+import type { PaginatedResult } from "@/lib/types/api";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 
+// MON~SUN 요일 상수
 const DAYS_OF_WEEK = [
   { value: "MON", label: "월" },
   { value: "TUE", label: "화" },
@@ -36,8 +39,12 @@ const DAYS_OF_WEEK = [
 ];
 
 const scheduleFormSchema = z.object({
-  time_start: z.string().min(1, "시작 시간을 입력하세요"),
-  time_end: z.string().min(1, "종료 시간을 입력하세요"),
+  content_id: z.string().min(1, "콘텐츠 ID를 입력하세요"),
+  store_id: z.string().min(1, "스토어 ID를 입력하세요"),
+  start_at: z.string().min(1, "시작일을 입력하세요"),
+  end_at: z.string().min(1, "종료일을 입력하세요"),
+  time_start: z.string().optional(),
+  time_end: z.string().optional(),
   dow_mask: z.array(z.string()).min(1, "요일을 하나 이상 선택하세요"),
 });
 
@@ -53,9 +60,11 @@ const SCHED_STATUS_CONFIG: Record<string, { label: string; className: string }> 
 const columns: DataTableColumn<AdScheduleRow>[] = [
   { key: "schedule_id", header: "일정 ID", className: "w-28" },
   { key: "content_id", header: "콘텐츠 ID" },
-  { key: "time_start", header: "시작 시간" },
-  { key: "time_end", header: "종료 시간" },
-  { key: "dow_mask", header: "요일" },
+  { key: "start_at", header: "시작일", render: (row) => row.start_at?.slice(0, 10) ?? "-" },
+  { key: "end_at", header: "종료일", render: (row) => row.end_at?.slice(0, 10) ?? "-" },
+  { key: "time_start", header: "시작 시간", render: (row) => row.time_start ?? "-" },
+  { key: "time_end", header: "종료 시간", render: (row) => row.time_end ?? "-" },
+  { key: "dow_mask", header: "요일", render: (row) => row.dow_mask ?? "-" },
   {
     key: "status",
     header: "상태",
@@ -73,21 +82,51 @@ const columns: DataTableColumn<AdScheduleRow>[] = [
   },
 ];
 
-export function AdsSchedulesClient() {
+interface AdsSchedulesClientProps {
+  initialData: PaginatedResult<AdScheduleRow>;
+}
+
+export function AdsSchedulesClient({ initialData }: AdsSchedulesClientProps) {
+  const router = useRouter();
   const [registerOpen, setRegisterOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
 
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: { time_start: "08:00", time_end: "22:00", dow_mask: [] },
+    defaultValues: {
+      content_id: "",
+      store_id: "",
+      start_at: "",
+      end_at: "",
+      time_start: "08:00",
+      time_end: "22:00",
+      dow_mask: [],
+    },
   });
 
-  const handleSubmit = (values: ScheduleFormValues) => {
-    console.log("광고 일정 저장:", values);
-    toast.success("광고 일정이 등록되었습니다.");
-    setRegisterOpen(false);
-    form.reset();
+  const handleSubmit = async (values: ScheduleFormValues) => {
+    // DOW 마스크: 선택된 요일을 콤마 구분 문자열로 저장 (MON,TUE,WED ...)
+    const dowMaskStr = values.dow_mask.join(",");
+
+    const result = await createAdSchedule({
+      content_id: values.content_id,
+      store_id: values.store_id,
+      start_at: values.start_at,
+      end_at: values.end_at,
+      time_start: values.time_start || null,
+      time_end: values.time_end || null,
+      dow_mask: dowMaskStr,
+    });
+
+    if (result.ok) {
+      toast.success("광고 일정이 등록되었습니다.");
+      setRegisterOpen(false);
+      form.reset();
+      router.refresh();
+    } else {
+      toast.error(result.error.message ?? "등록 중 오류가 발생했습니다.");
+    }
   };
 
   return (
@@ -103,7 +142,7 @@ export function AdsSchedulesClient() {
 
       <DataTable
         columns={columns}
-        data={MOCK_AD_SCHEDULES}
+        data={initialData.data}
         rowKey={(row) => row.schedule_id}
         searchPlaceholder="일정 ID·콘텐츠 ID 검색"
         toolbarActions={
@@ -125,13 +164,67 @@ export function AdsSchedulesClient() {
       >
         <Form {...form}>
           <form className="space-y-4 p-4">
+            <FormField
+              control={form.control}
+              name="content_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>콘텐츠 ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="콘텐츠 UUID" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="store_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>스토어 ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="스토어 UUID" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="start_at"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>시작일 *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="end_at"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>종료일 *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="time_start"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>시작 시간 *</FormLabel>
+                    <FormLabel>시작 시간</FormLabel>
                     <FormControl>
                       <Input type="time" {...field} />
                     </FormControl>
@@ -144,7 +237,7 @@ export function AdsSchedulesClient() {
                 name="time_end"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>종료 시간 *</FormLabel>
+                    <FormLabel>종료 시간</FormLabel>
                     <FormControl>
                       <Input type="time" {...field} />
                     </FormControl>

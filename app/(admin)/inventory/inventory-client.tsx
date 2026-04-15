@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,44 +43,36 @@ import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { LayerDialog } from "@/components/admin/layer-dialog";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
 import { CategorySelect, ITEM_CATEGORIES } from "@/components/admin/domain/category-select";
-import { MOCK_INVENTORIES, type InventoryWithItem } from "@/lib/mocks/inventory";
 import { Settings2 } from "lucide-react";
+import { adjustInventory } from "@/lib/actions/domain/inventory.actions";
+import { getInventoryTxnList } from "@/lib/actions/domain/inventory.actions";
+import type { Database } from "@/lib/supabase/database.types";
 
-// 더미 트랜잭션 이력 데이터
-const MOCK_TXN_HISTORY = [
-  {
-    id: "txn-001",
-    type: "INBOUND",
-    qty: 100,
-    before: 50,
-    after: 150,
-    created_at: "2024-04-10T08:00:00Z",
-  },
-  {
-    id: "txn-002",
-    type: "OUTBOUND",
-    qty: -5,
-    before: 150,
-    after: 145,
-    created_at: "2024-04-11T09:00:00Z",
-  },
-  {
-    id: "txn-003",
-    type: "ADJUST",
-    qty: 5,
-    before: 145,
-    after: 150,
-    created_at: "2024-04-12T10:00:00Z",
-  },
-  {
-    id: "txn-004",
-    type: "RETURN",
-    qty: 2,
-    before: 148,
-    after: 150,
-    created_at: "2024-04-13T11:00:00Z",
-  },
-];
+// 재고 + 상품 조인 타입
+type InventoryRow = Database["public"]["Tables"]["inventory"]["Row"];
+type ItemRow = Database["public"]["Tables"]["item"]["Row"];
+
+export type InventoryWithItem = InventoryRow & {
+  item: ItemRow | null;
+  // 편의 필드 (item에서 추출)
+  item_name: string;
+  item_sku: string;
+  category_name: string;
+};
+
+// 트랜잭션 이력 Row 타입
+type InventoryTxnRow = Database["public"]["Tables"]["inventory_txn"]["Row"];
+
+/** 서버에서 받은 raw join 데이터를 InventoryWithItem 형태로 변환 */
+function normalizeInventory(raw: InventoryRow & { item: ItemRow | null }): InventoryWithItem {
+  return {
+    ...raw,
+    item: raw.item,
+    item_name: raw.item?.name ?? "-",
+    item_sku: raw.item?.sku ?? "-",
+    category_name: raw.item?.category_name ?? "-",
+  };
+}
 
 const adjustFormSchema = z.object({
   txn_type: z.enum(["INBOUND", "ADJUST", "RETURN"]),
@@ -97,15 +91,36 @@ const columns: DataTableColumn<InventoryWithItem>[] = [
     header: "상태",
     render: (row) => <DomainBadge type="inventory" status={row.status ?? ""} />,
   },
-  { key: "on_hand", header: "재고", render: (row) => `${row.on_hand}개` },
+  {
+    key: "on_hand",
+    header: "재고",
+    render: (row) => (
+      <span className={row.on_hand < row.safety_stock ? "text-alert-red font-semibold" : ""}>
+        {row.on_hand}개
+      </span>
+    ),
+  },
   { key: "reserved", header: "예약", render: (row) => `${row.reserved}개` },
   { key: "safety_stock", header: "안전재고", render: (row) => `${row.safety_stock}개` },
 ];
 
-export function InventoryClient() {
+interface InventoryClientProps {
+  initialData: (InventoryRow & { item: ItemRow | null })[];
+}
+
+export function InventoryClient({ initialData }: InventoryClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  // raw 데이터를 정규화
+  const inventories: InventoryWithItem[] = initialData.map(normalizeInventory);
+
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [adjustTarget, setAdjustTarget] = useState<InventoryWithItem | null>(null);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [historyTarget, setHistoryTarget] = useState<InventoryWithItem | null>(null);
+  const [txnHistory, setTxnHistory] = useState<InventoryTxnRow[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const form = useForm<AdjustFormValues>({
     resolver: zodResolver(adjustFormSchema),
@@ -114,17 +129,57 @@ export function InventoryClient() {
 
   const filteredData =
     categoryFilter === "ALL"
-      ? MOCK_INVENTORIES
-      : MOCK_INVENTORIES.filter((inv) => {
+      ? inventories
+      : inventories.filter((inv) => {
           const cat = ITEM_CATEGORIES.find((c) => c.label === inv.category_name);
           return cat?.value === categoryFilter;
         });
 
+  // 재고 조정 다이얼로그 열기
+  const handleOpenAdjust = (row?: InventoryWithItem) => {
+    setAdjustTarget(row ?? null);
+    setAdjustOpen(true);
+  };
+
+  // 재고 조정 제출
   const handleAdjust = (values: AdjustFormValues) => {
-    console.log("재고 조정:", values);
-    toast.success("재고가 조정되었습니다.");
-    setAdjustOpen(false);
-    form.reset();
+    if (!adjustTarget) {
+      toast.error("조정할 재고를 선택해 주세요.");
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await adjustInventory({
+        inventory_id: adjustTarget.inventory_id,
+        type: values.txn_type === "RETURN" ? "ADJUST" : values.txn_type,
+        quantity: values.quantity,
+        reason: values.memo,
+      });
+
+      if (result.ok) {
+        toast.success("재고가 조정되었습니다.");
+        setAdjustOpen(false);
+        form.reset();
+        router.refresh();
+      } else {
+        toast.error(result.error?.message ?? "재고 조정에 실패했습니다.");
+      }
+    });
+  };
+
+  // 트랜잭션 이력 Sheet 열기
+  const handleRowClick = async (row: InventoryWithItem) => {
+    setHistoryTarget(row);
+    setHistoryLoading(true);
+    setTxnHistory([]);
+
+    const result = await getInventoryTxnList({ inventory_id: row.inventory_id });
+    if (result.ok && result.data) {
+      setTxnHistory(result.data);
+    } else {
+      toast.error("트랜잭션 이력을 불러오지 못했습니다.");
+    }
+    setHistoryLoading(false);
   };
 
   return (
@@ -144,13 +199,14 @@ export function InventoryClient() {
         rowKey={(row) => row.inventory_id}
         searchPlaceholder="상품명·SKU 검색"
         toolbarActions={
-          <Button size="sm" variant="outline-gray" onClick={() => setAdjustOpen(true)}>
+          <Button size="sm" variant="outline-gray" onClick={() => handleOpenAdjust()}>
             <Settings2 className="mr-1 h-3.5 w-3.5" />
             재고 조정
           </Button>
         }
-        onRowClick={(row) => setHistoryTarget(row)}
+        onRowClick={handleRowClick}
         showRowActions={false}
+        rowClassName={(row) => (row.on_hand < row.safety_stock ? "bg-red-50 hover:bg-red-100" : "")}
       />
 
       {/* 재고 조정 다이얼로그 */}
@@ -160,10 +216,24 @@ export function InventoryClient() {
         title="재고 조정"
         size="sm"
         onConfirm={form.handleSubmit(handleAdjust)}
-        confirmLabel="조정"
+        confirmLabel={isPending ? "처리 중..." : "조정"}
       >
         <Form {...form}>
           <form className="space-y-4 p-4">
+            {/* 선택된 상품 표시 */}
+            {adjustTarget && (
+              <div className="bg-panel rounded px-3 py-2 text-sm">
+                <span className="text-muted-foreground">대상: </span>
+                <span className="font-medium">{adjustTarget.item_name}</span>
+                <span className="text-muted-foreground ml-2">({adjustTarget.item_sku})</span>
+              </div>
+            )}
+            {!adjustTarget && (
+              <div className="flex items-center gap-2 rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
+                <AlertTriangle className="h-4 w-4" />
+                <span>목록에서 행을 선택 후 조정하거나, 재고 조정 버튼을 클릭하세요.</span>
+              </div>
+            )}
             <FormField
               control={form.control}
               name="txn_type"
@@ -229,34 +299,40 @@ export function InventoryClient() {
             <SheetDescription>{historyTarget?.item_name}</SheetDescription>
           </SheetHeader>
           <div className="mt-4">
-            <div className="border-separator rounded border">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-panel">
-                    <TableHead>유형</TableHead>
-                    <TableHead className="text-center">수량</TableHead>
-                    <TableHead className="text-center">변경 전</TableHead>
-                    <TableHead className="text-center">변경 후</TableHead>
-                    <TableHead>일시</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {MOCK_TXN_HISTORY.map((txn) => (
-                    <TableRow key={txn.id}>
-                      <TableCell className="text-xs font-medium">{txn.type}</TableCell>
-                      <TableCell className="text-center text-sm">
-                        <span className={txn.qty > 0 ? "text-primary" : "text-alert-red"}>
-                          {txn.qty > 0 ? `+${txn.qty}` : txn.qty}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center text-sm">{txn.before}</TableCell>
-                      <TableCell className="text-center text-sm">{txn.after}</TableCell>
-                      <TableCell className="text-xs">{txn.created_at.slice(0, 10)}</TableCell>
+            {historyLoading ? (
+              <p className="text-muted-foreground py-8 text-center text-sm">불러오는 중...</p>
+            ) : txnHistory.length === 0 ? (
+              <p className="text-muted-foreground py-8 text-center text-sm">이력이 없습니다.</p>
+            ) : (
+              <div className="border-separator rounded border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-panel">
+                      <TableHead>유형</TableHead>
+                      <TableHead className="text-center">수량</TableHead>
+                      <TableHead className="text-center">변경 전</TableHead>
+                      <TableHead className="text-center">변경 후</TableHead>
+                      <TableHead>일시</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {txnHistory.map((txn) => (
+                      <TableRow key={txn.txnId}>
+                        <TableCell className="text-xs font-medium">{txn.type}</TableCell>
+                        <TableCell className="text-center text-sm">
+                          <span className={txn.quantity > 0 ? "text-primary" : "text-alert-red"}>
+                            {txn.quantity > 0 ? `+${txn.quantity}` : txn.quantity}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center text-sm">{txn.before_quantity}</TableCell>
+                        <TableCell className="text-center text-sm">{txn.after_quantity}</TableCell>
+                        <TableCell className="text-xs">{txn.created_at.slice(0, 10)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         </SheetContent>
       </Sheet>

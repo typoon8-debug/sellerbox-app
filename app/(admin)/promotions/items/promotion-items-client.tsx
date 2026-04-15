@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,32 +12,88 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
-import { LayerDialog } from "@/components/admin/layer-dialog";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
-import { MOCK_PROMOTIONS } from "@/lib/mocks/promotion";
-import { MOCK_ITEMS } from "@/lib/mocks/item";
-import type { ItemRow } from "@/lib/types/domain/item";
+import { addPromotionItem } from "@/lib/actions/domain/promotion.actions";
+import { toastResult } from "@/lib/utils/toast-result";
+import type { PromotionRow, PromotionItemRow } from "@/lib/types/domain/promotion";
 import { Plus } from "lucide-react";
 
-const columns: DataTableColumn<ItemRow>[] = [
-  { key: "sku", header: "SKU", className: "w-28" },
-  { key: "name", header: "상품명" },
-  { key: "category_name", header: "카테고리" },
+const columns: DataTableColumn<PromotionItemRow>[] = [
+  { key: "id", header: "ID", className: "w-28" },
+  { key: "item_id", header: "상품 ID" },
+  { key: "promo_id", header: "프로모션 ID" },
   {
     key: "status",
     header: "상태",
     render: (row) => <DomainBadge type="item" status={row.status ?? ""} />,
   },
+  {
+    key: "condition_qty",
+    header: "조건 수량",
+    render: (row) => row.condition_qty ?? "-",
+  },
+  {
+    key: "reward_qty",
+    header: "보상 수량",
+    render: (row) => row.reward_qty ?? "-",
+  },
+  {
+    key: "reward_item_id",
+    header: "N+1 대체상품 ID",
+    render: (row) => row.reward_item_id ?? "-",
+  },
 ];
 
-export function PromotionItemsClient() {
+interface PromotionItemsClientProps {
+  promotions: PromotionRow[];
+  initialItems: PromotionItemRow[];
+}
+
+export function PromotionItemsClient({ promotions, initialItems }: PromotionItemsClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [selectedPromo, setSelectedPromo] = useState<string>("");
   const [addOpen, setAddOpen] = useState(false);
 
-  const handleAdd = () => {
-    toast.success("상품이 프로모션에 추가되었습니다.");
-    setAddOpen(false);
+  // 폼 상태
+  const [itemId, setItemId] = useState("");
+  const [rewardItemId, setRewardItemId] = useState("");
+  const [conditionQty, setConditionQty] = useState<number>(1);
+  const [rewardQty, setRewardQty] = useState<number>(1);
+
+  // 선택된 프로모션의 아이템 필터링
+  const filteredItems = selectedPromo
+    ? initialItems.filter((item) => item.promo_id === selectedPromo)
+    : [];
+
+  // 프로모션 상품 추가 처리
+  const handleAdd = async () => {
+    if (!selectedPromo || !itemId) return;
+
+    const result = await addPromotionItem({
+      promo_id: selectedPromo,
+      item_id: itemId,
+      condition_qty: conditionQty || null,
+      reward_qty: rewardQty || null,
+      reward_item_id: rewardItemId || null,
+    });
+    const ok = toastResult(result, { successMessage: "상품이 프로모션에 추가되었습니다." });
+    if (ok) {
+      setAddOpen(false);
+      setItemId("");
+      setRewardItemId("");
+      setConditionQty(1);
+      setRewardQty(1);
+      startTransition(() => router.refresh());
+    }
   };
 
   return (
@@ -47,7 +105,7 @@ export function PromotionItemsClient() {
             <SelectValue placeholder="프로모션 선택" />
           </SelectTrigger>
           <SelectContent>
-            {MOCK_PROMOTIONS.map((p) => (
+            {promotions.map((p) => (
               <SelectItem key={p.promo_id} value={p.promo_id}>
                 {p.name}
               </SelectItem>
@@ -58,9 +116,9 @@ export function PromotionItemsClient() {
 
       <DataTable
         columns={columns}
-        data={selectedPromo ? MOCK_ITEMS.slice(0, 3) : []}
-        rowKey={(row) => row.item_id}
-        searchPlaceholder="상품명 검색"
+        data={filteredItems}
+        rowKey={(row) => row.id}
+        searchPlaceholder="상품 ID 검색"
         toolbarActions={
           <Button size="sm" onClick={() => setAddOpen(true)} disabled={!selectedPromo}>
             <Plus className="mr-1 h-3.5 w-3.5" />
@@ -71,24 +129,64 @@ export function PromotionItemsClient() {
         showRowActions={false}
       />
 
-      <LayerDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        title="프로모션 상품 추가"
-        size="md"
-        onConfirm={handleAdd}
-        confirmLabel="추가"
-      >
-        <div className="p-4">
-          <DataTable
-            columns={columns}
-            data={MOCK_ITEMS}
-            rowKey={(row) => row.item_id}
-            searchPlaceholder="추가할 상품 검색"
-            showRowActions={false}
-          />
-        </div>
-      </LayerDialog>
+      {/* 프로모션 상품 추가 다이얼로그 */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>프로모션 상품 추가</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="item-id">상품 ID *</Label>
+              <Input
+                id="item-id"
+                placeholder="상품 UUID"
+                value={itemId}
+                onChange={(e) => setItemId(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reward-item-id">N+1 대체상품 ID (선택)</Label>
+              <Input
+                id="reward-item-id"
+                placeholder="대체상품 UUID (N+1 조건)"
+                value={rewardItemId}
+                onChange={(e) => setRewardItemId(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="condition-qty">조건 수량</Label>
+                <Input
+                  id="condition-qty"
+                  type="number"
+                  min={1}
+                  value={conditionQty}
+                  onChange={(e) => setConditionQty(Number(e.target.value))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reward-qty">보상 수량</Label>
+                <Input
+                  id="reward-qty"
+                  type="number"
+                  min={1}
+                  value={rewardQty}
+                  onChange={(e) => setRewardQty(Number(e.target.value))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handleAdd} disabled={isPending || !itemId}>
+              {isPending ? "추가 중..." : "추가"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -4,7 +4,10 @@ import { withAction } from "@/app/_actions/_utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { InventoryRepository } from "@/lib/repositories/inventory.repository";
 import { InventoryTxnRepository } from "@/lib/repositories/inventory-txn.repository";
-import { adjustInventorySchema } from "@/lib/schemas/domain/inventory.schema";
+import {
+  adjustInventorySchema,
+  getInventoryTxnListSchema,
+} from "@/lib/schemas/domain/inventory.schema";
 
 /** 재고 조정 (INBOUND / ADJUST) */
 export const adjustInventory = withAction(
@@ -42,4 +45,14 @@ export const adjustInventory = withAction(
     return { inventory_id, before_quantity: beforeQty, after_quantity: afterQty };
   },
   { action: "UPDATE", resource: "INVENTORY" }
+);
+
+/** 재고 트랜잭션 이력 조회 */
+export const getInventoryTxnList = withAction(
+  getInventoryTxnListSchema,
+  async ({ inventory_id }) => {
+    const supabase = createAdminClient();
+    const txnRepo = new InventoryTxnRepository(supabase);
+    return txnRepo.findByInventoryId(inventory_id);
+  }
 );

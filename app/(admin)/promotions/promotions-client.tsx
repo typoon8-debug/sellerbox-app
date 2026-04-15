@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,16 +26,27 @@ import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { LayerDialog } from "@/components/admin/layer-dialog";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
 import { DateRangePicker } from "@/components/admin/domain/date-range-picker";
-import { MOCK_PROMOTIONS } from "@/lib/mocks/promotion";
+import { createPromotion, updatePromotion } from "@/lib/actions/domain/promotion.actions";
+import { toastResult } from "@/lib/utils/toast-result";
 import type { PromotionRow } from "@/lib/types/domain/promotion";
 import { Plus } from "lucide-react";
 
+// 프로모션 등록 폼 스키마 (필수 필드만)
 const promoFormSchema = z.object({
+  store_id: z.string().min(1, "가게 ID를 입력하세요"),
   name: z.string().min(1, "프로모션명을 입력하세요"),
-  type: z.string().min(1, "유형을 선택하세요"),
-  discount_value: z.number().optional(),
+  type: z.enum([
+    "SALE",
+    "DISCOUNT_PCT",
+    "DISCOUNT_FIXED",
+    "ONE_PLUS_ONE",
+    "TWO_PLUS_ONE",
+    "BUNDLE",
+  ] as const),
+  discount_value: z.number().optional().nullable(),
   start_at: z.string().min(1, "시작일을 입력하세요"),
   end_at: z.string().min(1, "종료일을 입력하세요"),
+  status: z.enum(["SCHEDULED", "ACTIVE", "PAUSED", "ENDED"] as const),
 });
 
 type PromoFormValues = z.infer<typeof promoFormSchema>;
@@ -61,7 +72,13 @@ const columns: DataTableColumn<PromotionRow>[] = [
   },
 ];
 
-export function PromotionsClient() {
+interface PromotionsClientProps {
+  initialData: PromotionRow[];
+}
+
+export function PromotionsClient({ initialData }: PromotionsClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [registerOpen, setRegisterOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
@@ -70,20 +87,50 @@ export function PromotionsClient() {
 
   const form = useForm<PromoFormValues>({
     resolver: zodResolver(promoFormSchema),
-    defaultValues: { name: "", type: "", discount_value: 0, start_at: "", end_at: "" },
+    defaultValues: {
+      store_id: "",
+      name: "",
+      type: "SALE",
+      discount_value: null,
+      start_at: "",
+      end_at: "",
+      status: "SCHEDULED",
+    },
   });
 
-  const filteredData = MOCK_PROMOTIONS.filter((p) => {
+  // 클라이언트 사이드 필터링 (서버 필터링 보완)
+  const filteredData = initialData.filter((p) => {
     if (typeFilter !== "ALL" && p.type !== typeFilter) return false;
     if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
+    if (dateFrom && p.start_at && new Date(p.start_at) < dateFrom) return false;
+    if (dateTo && p.end_at && new Date(p.end_at) > dateTo) return false;
     return true;
   });
 
-  const handleSubmit = (values: PromoFormValues) => {
-    console.log("프로모션 저장:", values);
-    toast.success("프로모션이 등록되었습니다.");
-    setRegisterOpen(false);
-    form.reset();
+  // 프로모션 등록 처리
+  const handleSubmit = async (values: PromoFormValues) => {
+    const result = await createPromotion({
+      store_id: values.store_id,
+      name: values.name,
+      type: values.type,
+      discount_value: values.discount_value ?? null,
+      start_at: values.start_at,
+      end_at: values.end_at,
+      status: values.status,
+    });
+    const ok = toastResult(result, { successMessage: "프로모션이 등록되었습니다." });
+    if (ok) {
+      setRegisterOpen(false);
+      form.reset();
+      startTransition(() => router.refresh());
+    }
+  };
+
+  // ACTIVE 상태로 활성화 처리
+  const handleActivate = async (row: PromotionRow) => {
+    const result = await updatePromotion({ promo_id: row.promo_id, status: "ACTIVE" });
+    const ok = toastResult(result, { successMessage: "프로모션이 활성화되었습니다." });
+    if (ok) startTransition(() => router.refresh());
   };
 
   return (
@@ -130,14 +177,17 @@ export function PromotionsClient() {
         rowKey={(row) => row.promo_id}
         searchPlaceholder="프로모션명 검색"
         toolbarActions={
-          <Button size="sm" onClick={() => setRegisterOpen(true)}>
+          <Button size="sm" onClick={() => setRegisterOpen(true)} disabled={isPending}>
             <Plus className="mr-1 h-3.5 w-3.5" />
             프로모션 등록
           </Button>
         }
-        showRowActions={false}
+        onRowEdit={handleActivate}
+        loading={isPending}
+        showRowActions
       />
 
+      {/* 프로모션 등록 다이얼로그 */}
       <LayerDialog
         open={registerOpen}
         onOpenChange={setRegisterOpen}
@@ -148,6 +198,19 @@ export function PromotionsClient() {
       >
         <Form {...form}>
           <form className="space-y-4 p-4">
+            <FormField
+              control={form.control}
+              name="store_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>가게 ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="가게 UUID" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="name"
@@ -178,6 +241,8 @@ export function PromotionsClient() {
                       <SelectItem value="DISCOUNT_PCT">% 할인</SelectItem>
                       <SelectItem value="DISCOUNT_FIXED">정액 할인</SelectItem>
                       <SelectItem value="ONE_PLUS_ONE">1+1</SelectItem>
+                      <SelectItem value="TWO_PLUS_ONE">2+1</SelectItem>
+                      <SelectItem value="BUNDLE">묶음</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -194,10 +259,33 @@ export function PromotionsClient() {
                     <Input
                       type="number"
                       placeholder="0"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(e.target.value ? Number(e.target.value) : null)
+                      }
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>초기 상태</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="SCHEDULED">예약</SelectItem>
+                      <SelectItem value="ACTIVE">즉시 활성화</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

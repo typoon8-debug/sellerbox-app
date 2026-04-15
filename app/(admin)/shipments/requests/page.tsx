@@ -1,8 +1,17 @@
 // F007: 배송 요청 관리
 import { PageTitleBar } from "@/components/contents/page-title-bar";
 import { RequestsClient } from "@/app/(admin)/shipments/requests/requests-client";
+import { createClient } from "@/lib/supabase/server";
+import { DispatchRequestRepository } from "@/lib/repositories/dispatch-request.repository";
 
-export default function ShipmentsRequestsPage() {
+export default async function ShipmentsRequestsPage() {
+  // 서버 컴포넌트에서 Supabase 클라이언트 생성
+  const supabase = await createClient();
+  const repo = new DispatchRequestRepository(supabase);
+
+  // 배송 요청 목록 페이지네이션 조회
+  const result = await repo.paginate({ page: 1, pageSize: 50 });
+
   return (
     <div>
       <PageTitleBar
@@ -10,7 +19,7 @@ export default function ShipmentsRequestsPage() {
         screenNumber="41001"
         breadcrumbs={[{ label: "배송 관리" }, { label: "배송 요청 관리" }]}
       />
-      <RequestsClient />
+      <RequestsClient initialData={result.data} />
     </div>
   );
 }

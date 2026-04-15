@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,9 +14,11 @@ import {
 } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
-import { MOCK_REVIEWS, type ReviewWithCeoReply } from "@/lib/mocks/support";
+import { createCeoReview, updateCeoReview } from "@/lib/actions/domain/support.actions";
 import { Star, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { PaginatedResult } from "@/lib/types/api";
+import type { ReviewWithCeo } from "@/app/(admin)/support/reviews/page";
 
 // 별점 렌더링 컴포넌트
 function StarRating({ rating }: { rating: number | null }) {
@@ -35,30 +38,75 @@ function StarRating({ rating }: { rating: number | null }) {
   );
 }
 
-export function ReviewsClient() {
-  const [statusFilter, setStatusFilter] = useState("ALL");
+interface ReviewsClientProps {
+  initialData: PaginatedResult<ReviewWithCeo>;
+  initialStatus: string;
+}
+
+export function ReviewsClient({ initialData, initialStatus }: ReviewsClientProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
-    MOCK_REVIEWS.forEach((r) => {
-      init[r.review_id] = r.ceo_reply ?? "";
+    initialData.data.forEach((r) => {
+      init[r.review_id] = r.ceoReview?.content ?? "";
     });
     return init;
   });
 
-  const filteredData = MOCK_REVIEWS.filter((r) => {
-    if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
-    return true;
-  });
-
-  const handleSaveReply = () => {
-    toast.success("CEO 답변이 저장되었습니다.");
-    setExpandedId(null);
+  // 상태 필터 변경 시 URL 파라미터 업데이트 → 서버 재조회
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    startTransition(() => {
+      const params = new URLSearchParams();
+      if (value !== "ALL") params.set("status", value);
+      router.push(`?${params.toString()}`);
+    });
   };
 
-  const columns: DataTableColumn<ReviewWithCeoReply>[] = [
+  // CEO 답변 저장 (신규 등록 또는 수정)
+  const handleSaveReply = async (review: ReviewWithCeo) => {
+    const content = replyTexts[review.review_id] ?? "";
+    if (!content.trim()) {
+      toast.error("답변 내용을 입력하세요.");
+      return;
+    }
+
+    if (review.ceoReview) {
+      // 기존 답변 수정 - modified_at 갱신
+      const result = await updateCeoReview({
+        ceo_reviewId: review.ceoReview.ceo_reviewId,
+        content,
+      });
+      if (result.ok) {
+        toast.success("CEO 답변이 수정되었습니다.");
+        setExpandedId(null);
+        router.refresh();
+      } else {
+        toast.error(result.error.message ?? "수정 중 오류가 발생했습니다.");
+      }
+    } else {
+      // 신규 답변 등록 - ceo_review 테이블 INSERT
+      const result = await createCeoReview({
+        reviewId: review.review_id,
+        content,
+        status: "VISIBLE",
+      });
+      if (result.ok) {
+        toast.success("CEO 답변이 등록되었습니다.");
+        setExpandedId(null);
+        router.refresh();
+      } else {
+        toast.error(result.error.message ?? "등록 중 오류가 발생했습니다.");
+      }
+    }
+  };
+
+  const columns: DataTableColumn<ReviewWithCeo>[] = [
     { key: "review_id", header: "리뷰 ID", className: "w-28" },
-    { key: "customer_name", header: "고객명" },
+    { key: "customer_id", header: "고객 ID" },
     {
       key: "rating",
       header: "별점",
@@ -77,11 +125,11 @@ export function ReviewsClient() {
       render: (row) => <DomainBadge type="review" status={row.status ?? ""} />,
     },
     {
-      key: "ceo_reply",
+      key: "ceoReview",
       header: "CEO 답변",
       render: (row) => (
-        <span className={cn("text-xs", row.ceo_reply ? "text-primary" : "text-text-placeholder")}>
-          {row.ceo_reply ? "답변 완료" : "미답변"}
+        <span className={cn("text-xs", row.ceoReview ? "text-primary" : "text-text-placeholder")}>
+          {row.ceoReview ? "답변 완료" : "미답변"}
         </span>
       ),
     },
@@ -96,7 +144,7 @@ export function ReviewsClient() {
     <div className="space-y-4 p-6">
       {/* 필터 */}
       <div className="flex items-center gap-3">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={handleStatusFilter} disabled={isPending}>
           <SelectTrigger className="h-8 w-36">
             <SelectValue placeholder="상태 필터" />
           </SelectTrigger>
@@ -112,9 +160,9 @@ export function ReviewsClient() {
 
       <DataTable
         columns={columns}
-        data={filteredData}
+        data={initialData.data}
         rowKey={(row) => row.review_id}
-        searchPlaceholder="리뷰ID·고객명 검색"
+        searchPlaceholder="리뷰ID·고객ID 검색"
         onRowClick={(row) =>
           setExpandedId((prev) => (prev === row.review_id ? null : row.review_id))
         }
@@ -126,20 +174,27 @@ export function ReviewsClient() {
       {expandedId && (
         <div className="border-separator bg-panel space-y-3 rounded-lg border p-4">
           {(() => {
-            const review = MOCK_REVIEWS.find((r) => r.review_id === expandedId);
+            const review = initialData.data.find((r) => r.review_id === expandedId);
             if (!review) return null;
             return (
               <>
                 <div className="flex items-center gap-2">
                   <MessageSquare className="text-primary h-4 w-4" />
-                  <span className="text-sm font-medium">CEO 답변 입력</span>
+                  <span className="text-sm font-medium">
+                    {review.ceoReview ? "CEO 답변 수정" : "CEO 답변 입력"}
+                  </span>
                   <span className="text-text-placeholder text-xs">
-                    — {review.customer_name}님 리뷰
+                    — 리뷰 ID: {review.review_id}
                   </span>
                 </div>
                 <div className="bg-panel border-separator text-text-placeholder rounded border p-3 text-sm leading-relaxed">
                   {review.content}
                 </div>
+                {review.ceoReview && (
+                  <p className="text-text-placeholder text-xs">
+                    최종 수정: {review.ceoReview.modified_at?.slice(0, 16).replace("T", " ") ?? "-"}
+                  </p>
+                )}
                 <Textarea
                   value={replyTexts[expandedId] ?? ""}
                   onChange={(e) =>
@@ -152,8 +207,8 @@ export function ReviewsClient() {
                   <Button variant="outline-gray" size="sm" onClick={() => setExpandedId(null)}>
                     닫기
                   </Button>
-                  <Button size="sm" onClick={() => handleSaveReply()}>
-                    저장
+                  <Button size="sm" onClick={() => handleSaveReply(review)}>
+                    {review.ceoReview ? "수정 저장" : "답변 등록"}
                   </Button>
                 </div>
               </>
