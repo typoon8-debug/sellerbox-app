@@ -1,0 +1,14 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
+import { BaseRepository } from "@/lib/repositories/base";
+
+export class OrderRepository extends BaseRepository<"order"> {
+  constructor(client: SupabaseClient<Database>) {
+    super(client, "order", "order_id", "ordered_at");
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected override applySearch(query: any, search: string): any {
+    return query.or(`order_no.ilike.%${search}%`);
+  }
+}

@@ -147,7 +147,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
 
 > 공통 데이터 레이어(리포지토리·스키마·액션)를 먼저 구축하고, 그 위에 개별 기능을 구현합니다. 모든 API 연동 작업은 Playwright MCP로 E2E 테스트 필수.
 
-- **Task 009: 도메인 리포지토리 레이어 구축** - 우선순위
+- ✅ **Task 009: 도메인 리포지토리 레이어 구축** - 완료
   - `lib/repositories/`에 도메인별 리포지토리 생성 (모두 `BaseRepository<T>` 상속)
     - `store.repository.ts`, `seller.repository.ts`, `store-fulfillment.repository.ts`
     - `item.repository.ts`, `item-detail.repository.ts`
