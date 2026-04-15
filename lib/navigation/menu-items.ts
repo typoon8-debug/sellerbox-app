@@ -15,6 +15,7 @@ import {
   Ticket,
   BarChart3,
   Headphones,
+  ScrollText,
 } from "lucide-react";
 
 export interface MenuNode {
@@ -345,6 +346,24 @@ export const MENU_TREE: MenuNode[] = [
         label: "공통코드 관리",
         href: "/codes",
         screenNumber: "30001",
+        section: "main",
+      },
+    ],
+  },
+
+  // 시스템 관리 (감사 로그)
+  {
+    id: "system",
+    label: "시스템 관리",
+    icon: ScrollText,
+    section: "main",
+    screenNumber: "90000",
+    children: [
+      {
+        id: "audit",
+        label: "감사 로그",
+        href: "/audit",
+        screenNumber: "90010",
         section: "main",
       },
     ],

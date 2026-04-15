@@ -352,11 +352,14 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `e2e/ads.spec.ts` 신규 작성 (광고 콘텐츠 등록 → 일정 연결 → ACTIVE 전환 → 로그 조회)
   - `.github/workflows/ci.yml` 복구 (lint+typecheck → 단위테스트 → build → E2E 선택 단계)
 
-- **Task 023: 배포 및 모니터링**
-  - Vercel 배포 환경 변수 설정 및 프로덕션 Supabase 연결
-  - 에러 모니터링 (Sentry 등) 도입 검토
-  - 감사 로그(`audit_log`) 대시보드 (선택)
-  - 성능 메트릭(Web Vitals) 수집
+- ✅ **Task 023: 배포 및 모니터링** - 완료
+  - `vercel.json` 생성 (빌드 명령, 환경 변수, 보안 헤더, ICN 리전)
+  - `@sentry/nextjs` 설치 및 `instrumentation.ts` + `sentry.client/server.config.ts` 설정
+  - `lib/repositories/audit-log.repository.ts` 신규 (`BaseRepository` 상속, `findByResource`·`findByActor` 추가)
+  - `app/(admin)/audit/page.tsx` + `audit-client.tsx` 신규 — 감사 로그 읽기 전용 DataTable
+  - `lib/navigation/menu-items.ts` MENU_TREE에 "시스템 관리 > 감사 로그" 항목 추가 (screenNumber: 90010)
+  - `components/web-vitals.tsx` 신규 — `useReportWebVitals` 기반 Web Vitals 수집
+  - `app/layout.tsx`에 `<WebVitals />` 추가
 
 ---
 

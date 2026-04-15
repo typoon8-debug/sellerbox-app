@@ -3,6 +3,7 @@ import { Noto_Sans_KR } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { WebVitals } from "@/components/web-vitals";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -37,6 +38,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>
+            <WebVitals />
             {children}
             <Toaster />
           </TooltipProvider>
