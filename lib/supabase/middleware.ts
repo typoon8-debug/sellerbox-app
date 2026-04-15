@@ -6,8 +6,12 @@ import { hasEnvVars } from "../utils";
 const PUBLIC_PATHS = ["/login", "/auth"];
 
 export async function updateSession(request: NextRequest) {
+  // pathname을 request 헤더에 추가해 Server Component에서 읽을 수 있게 함
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: { headers: requestHeaders },
   });
 
   // 환경변수 미설정 시 미들웨어 건너뜀
@@ -27,8 +31,9 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          // requestHeaders를 재사용하여 x-pathname 헤더가 유지되도록 함
           supabaseResponse = NextResponse.next({
-            request,
+            request: { headers: requestHeaders },
           });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -58,15 +63,6 @@ export async function updateSession(request: NextRequest) {
   // 미인증 사용자가 보호된 경로에 접근하면 /login으로 리디렉션
   if (!user && !isPublicPath) {
     return redirectToLogin();
-  }
-
-  // 인증됐지만 관리자 role이 아닌 경우 /login으로 차단
-  // app_metadata.role은 Task 007 loginAction에서 설정됨
-  if (user && !isPublicPath) {
-    const role = (user.app_metadata as Record<string, string> | undefined)?.role;
-    if (role && role !== "ADMIN") {
-      return redirectToLogin();
-    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

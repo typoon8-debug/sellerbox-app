@@ -184,7 +184,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] `recordAudit` 호출 후 `audit_log` 테이블에 실제 기록 여부 확인
   - [ ] 인증되지 않은 요청 시 `UnauthorizedError` 반환 확인
 
-- **Task 011: 인증 및 역할 기반 접근 제어 구현 (F011)**
+- ✅ **Task 011: 인증 및 역할 기반 접근 제어 구현 (F011)**
   - `app/(auth)/login/page.tsx`: Supabase Auth 이메일/비밀번호 로그인 실제 연동
   - `middleware.ts`: `app_metadata.role` 기반 경로 접근 제어 확장
     - PICKER → `orders/picking`만 접근, PACKER → `orders/packing`만 접근
