@@ -80,7 +80,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - 각 페이지에 기능 ID(F001~F024) 주석 삽입 → PRD 추적성 확보
   - `middleware.ts` 공개/보호 경로 매처에 신규 경로 반영, `app/(admin)/layout.tsx` role 가드 검증
 
-- **Task 003: 도메인 타입 정의 및 스키마 설계**
+- ✅ **Task 003: 도메인 타입 정의 및 스키마 설계** - 완료
   - `lib/types/domain/` 신규 폴더: PRD의 32개 테이블을 주제별로 그룹화해 타입 정의
     - `store.ts` (tenant·store·store_fulfillment·seller)
     - `item.ts` (item·item_detail)
