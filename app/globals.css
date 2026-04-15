@@ -1,0 +1,263 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   GUI 디자인가이드 기반 디자인 토큰 (슬라이드 17 기준)
+   Primary: #2E85FF 블루 시스템
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+:root {
+  /* ── shadcn 표준 토큰 (가이드 색상으로 재매핑) ── */
+  --background: #ffffff;
+  --foreground: #353535;
+  --card: #ffffff;
+  --card-foreground: #353535;
+  --popover: #ffffff;
+  --popover-foreground: #353535;
+  --primary: #2e85ff;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0f0;
+  --secondary-foreground: #353535;
+  --muted: #f5f6f8;
+  --muted-foreground: #6c6c6c;
+  --accent: #e2f3ff;
+  --accent-foreground: #2e85ff;
+  --destructive: #eb5757;
+  --destructive-foreground: #ffffff;
+  --border: #d0d5de;
+  --input: #a2acbd;
+  --ring: #2e85ff;
+  --radius: 4px;
+
+  /* ── 가이드 전용 확장 토큰 ── */
+  --primary-hover: #589dff;
+  --primary-disabled: #82b6ff;
+  --primary-light: #e2f3ff;
+  --neutral-line: #a2acbd;
+  --separator: #d0d5de;
+  --text-body: #353535;
+  --text-placeholder: #6c6c6c;
+  --text-strong: #272727;
+  --icon-disabled: #d4d4d4;
+  --bg-panel: #f5f6f8;
+  --bg-control: #ffffff;
+  --bg-hover: #f0f0f0;
+  --bg-disabled: #e5e5e5;
+  --bg-required: #fffad2;
+  --alert-red: #eb5757;
+  --alert-red-bg: #fdeeee;
+  --warn-yellow: #fffad2;
+  --info-bg: #e5e5e5;
+  --popup-title-bg: #e5edf4;
+  --toast-bg: #f1faff;
+
+  /* ── 그림자 ── */
+  --shadow-color: hsl(0 0% 0%);
+  --shadow-opacity: 0.1;
+  --shadow-blur: 8px;
+  --shadow-spread: -1px;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 4px;
+  --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  --shadow-xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0px 2px 4px 0px rgba(0, 0, 0, 0.1);
+  --shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.1), 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0px 4px 6px 0px rgba(0, 0, 0, 0.1), 0px 2px 4px 0px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0px 10px 15px 0px rgba(0, 0, 0, 0.1), 0px 4px 6px 0px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0px 20px 25px 0px rgba(0, 0, 0, 0.1), 0px 8px 10px 0px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0px 4px 8px -1px rgba(0, 0, 0, 0.25);
+  --shadow-popup: 0px 2px 2px 0px rgba(0, 0, 0, 0.3);
+
+  /* ── 타이포그래피 ── */
+  --font-sans: "Noto Sans KR", "Noto Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --letter-spacing: 0em;
+  --spacing: 0.25rem;
+  --tracking-normal: 0em;
+}
+
+.dark {
+  /* ── shadcn 표준 토큰 (다크 모드) ── */
+  --background: #1a1c23;
+  --foreground: #e5e7eb;
+  --card: #252830;
+  --card-foreground: #e5e7eb;
+  --popover: #252830;
+  --popover-foreground: #e5e7eb;
+  --primary: #2e85ff;
+  --primary-foreground: #ffffff;
+  --secondary: #2e3039;
+  --secondary-foreground: #e5e7eb;
+  --muted: #2a2d36;
+  --muted-foreground: #9ca3af;
+  --accent: #1a3a5c;
+  --accent-foreground: #60a5fa;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #374151;
+  --input: #4b5563;
+  --ring: #2e85ff;
+
+  /* ── 가이드 전용 확장 토큰 (다크) ── */
+  --primary-hover: #589dff;
+  --primary-disabled: #82b6ff;
+  --primary-light: #1a3a5c;
+  --neutral-line: #4b5563;
+  --separator: #374151;
+  --text-body: #e5e7eb;
+  --text-placeholder: #9ca3af;
+  --text-strong: #f3f4f6;
+  --icon-disabled: #6b7280;
+  --bg-panel: #1f2230;
+  --bg-control: #252830;
+  --bg-hover: #2e3039;
+  --bg-disabled: #374151;
+  --bg-required: #3d3820;
+  --alert-red: #f87171;
+  --alert-red-bg: #3b1111;
+  --warn-yellow: #3d3820;
+  --info-bg: #2e3039;
+  --popup-title-bg: #1a2a3a;
+  --toast-bg: #1a2a3a;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Tailwind v4 @theme inline — CSS 변수 → 유틸리티 클래스 매핑
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@theme inline {
+  /* shadcn 표준 */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* 반경 */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: 2px;
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius: 4px;
+
+  /* 폰트 */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* 트래킹 */
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+  --tracking-normal: var(--tracking-normal);
+
+  /* 그림자 */
+  --shadow-2xl: var(--shadow-2xl);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-md: var(--shadow-md);
+  --shadow: var(--shadow);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-2xs: var(--shadow-2xs);
+  --spacing: var(--spacing);
+  --letter-spacing: var(--letter-spacing);
+
+  /* ── 가이드 전용 확장 색상 유틸리티 ── */
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-disabled: var(--primary-disabled);
+  --color-primary-light: var(--primary-light);
+  --color-neutral-line: var(--neutral-line);
+  --color-separator: var(--separator);
+  --color-text-body: var(--text-body);
+  --color-text-placeholder: var(--text-placeholder);
+  --color-text-strong: var(--text-strong);
+  --color-icon-disabled: var(--icon-disabled);
+  --color-panel: var(--bg-panel);
+  --color-control: var(--bg-control);
+  --color-hover: var(--bg-hover);
+  --color-disabled: var(--bg-disabled);
+  --color-required: var(--bg-required);
+  --color-alert-red: var(--alert-red);
+  --color-alert-red-bg: var(--alert-red-bg);
+  --color-warn-yellow: var(--warn-yellow);
+  --color-info-bg: var(--info-bg);
+  --color-popup-title: var(--popup-title-bg);
+  --color-toast: var(--toast-bg);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   기본 레이어
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    letter-spacing: var(--tracking-normal);
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   타이포그래피 유틸리티 (슬라이드 18)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@layer utilities {
+  .text-h1 {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .text-h2 {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .text-h3 {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .text-body1 {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+  .text-body2 {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* 팝업 그림자 (가이드: rgba(0,0,0,0.3) 0 2px 2px) */
+  .shadow-popup {
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  /* 콤보박스 스크롤바 스타일 */
+  .scrollbar-popup::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-popup::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-popup::-webkit-scrollbar-thumb {
+    background-color: rgba(108, 108, 108, 0.5);
+    border-radius: 2px;
+  }
+}
