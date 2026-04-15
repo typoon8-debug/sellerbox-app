@@ -18,6 +18,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ScreenSplitToggle } from "./screen-split-toggle";
 import { TabMenuList } from "./tab-menu-list";
 import { useMdiStore, type MdiTab } from "@/lib/stores/mdi-store";
+import { useHotkeyMap } from "@/lib/hooks/use-hotkey";
 
 function MdiTabItem({
   tab,
@@ -88,6 +89,23 @@ export function MdiTabBar() {
       setPendingCloseId(null);
     }
   };
+
+  // ─── 키보드 단축키 ─────────────────────────────────────────────────────────
+  // Ctrl+W: 현재 활성 탭 닫기 (홈 탭 제외)
+  // Ctrl+1~9: 해당 인덱스 탭으로 이동
+  const hotkeyMap: Record<string, () => void> = {
+    "ctrl+w": () => {
+      if (activeTabId !== "home") handleClose(activeTabId);
+    },
+  };
+  for (let n = 1; n <= 9; n++) {
+    const idx = n - 1;
+    hotkeyMap[`ctrl+${n}`] = () => {
+      const target = tabs[idx];
+      if (target) handleFocus(target);
+    };
+  }
+  useHotkeyMap(hotkeyMap);
 
   return (
     <>

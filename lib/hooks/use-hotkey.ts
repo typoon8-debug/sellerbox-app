@@ -4,6 +4,17 @@ import { useEffect, useRef } from "react";
 
 const INPUT_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
+/** 단축키 문자열을 파싱해 modifier + mainKey 추출 */
+function parseKey(key: string) {
+  const parts = key.toLowerCase().split("+");
+  return {
+    mainKey: parts[parts.length - 1],
+    needsCtrl: parts.includes("ctrl"),
+    needsShift: parts.includes("shift"),
+    needsAlt: parts.includes("alt"),
+  };
+}
+
 /**
  * 키보드 단축키 훅
  *
@@ -23,11 +34,7 @@ export function useHotkey(key: string, handler: () => void, options?: { enabled?
   useEffect(() => {
     if (!enabled) return;
 
-    const parts = key.toLowerCase().split("+");
-    const mainKey = parts[parts.length - 1];
-    const needsCtrl = parts.includes("ctrl");
-    const needsShift = parts.includes("shift");
-    const needsAlt = parts.includes("alt");
+    const { mainKey, needsCtrl, needsShift, needsAlt } = parseKey(key);
 
     const onKeyDown = (e: KeyboardEvent) => {
       // 입력 필드 포커스 중에는 단축키 무시 (Esc 제외)
@@ -51,4 +58,55 @@ export function useHotkey(key: string, handler: () => void, options?: { enabled?
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [key, enabled]);
+}
+
+/**
+ * 여러 단축키를 한 번에 등록하는 훅 (MDI 탭 단축키 등 복수 키 조합에 적합)
+ *
+ * @param keyMap  - { "ctrl+w": handler, "ctrl+1": handler, ... } 형태의 맵
+ * @param options - enabled: false이면 전체 비활성화
+ *
+ * @example
+ * useHotkeyMap({
+ *   "ctrl+w": () => closeCurrentTab(),
+ *   "ctrl+1": () => focusTab(0),
+ * });
+ */
+export function useHotkeyMap(keyMap: Record<string, () => void>, options?: { enabled?: boolean }) {
+  const handlersRef = useRef(keyMap);
+  handlersRef.current = keyMap;
+
+  const enabled = options?.enabled !== false;
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+
+      for (const [key, handler] of Object.entries(handlersRef.current)) {
+        const { mainKey, needsCtrl, needsShift, needsAlt } = parseKey(key);
+
+        if (mainKey !== "escape" && INPUT_TAGS.has(target.tagName)) continue;
+        if (mainKey !== "escape" && target.isContentEditable) continue;
+
+        const keyMatch =
+          mainKey === "escape" ? e.key === "Escape" : e.key.toLowerCase() === mainKey;
+
+        if (
+          keyMatch &&
+          e.ctrlKey === needsCtrl &&
+          e.shiftKey === needsShift &&
+          e.altKey === needsAlt
+        ) {
+          e.preventDefault();
+          handler();
+          break;
+        }
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [enabled]);
 }
