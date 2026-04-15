@@ -65,7 +65,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `app/_actions/_utils.ts`의 `withAction`, `recordAudit` 공통 래퍼 컴파일 통과 확인
   - `npm run check-all` 통과 확인
 
-- **Task 002: 라우트 스캐폴딩 및 네비게이션 트리 구성**
+- ✅ **Task 002: 라우트 스캐폴딩 및 네비게이션 트리 구성** - 완료
   - `lib/navigation/menu-items.ts`의 `MENU_TREE`를 PRD 메뉴 구조(9개 카테고리 · 24개 페이지)에 맞게 갱신
   - `app/(admin)/` 하위에 24개 페이지 빈 껍데기 생성 (모두 `page.tsx` + 최소 `PageTitleBar`):
     - `stores/page.tsx` (가게관리), `stores/info/page.tsx` (가게정보관리 — 탭 구조)
