@@ -170,7 +170,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - [ ] FK 제약 위반 시 `ConflictError` 반환 확인
   - [ ] 페이지네이션 `total`·`items` 정합성 검증
 
-- **Task 010: Server Actions 공통 패턴 및 Zod 스키마 작성**
+- ✅ **Task 010: Server Actions 공통 패턴 및 Zod 스키마 작성** - 완료
   - `lib/schemas/domain/` 신규 폴더: 도메인별 Zod 스키마 (create/update 분리)
     - `store.schema.ts`, `item.schema.ts`, `inventory.schema.ts`, `order.schema.ts` 등 9개 도메인
   - `lib/actions/domain/` 신규 폴더: Server Actions (`withAction` 래퍼 사용)
