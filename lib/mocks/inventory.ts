@@ -1,0 +1,80 @@
+import type { InventoryRow } from "@/lib/types/domain/inventory";
+
+export interface InventoryWithItem extends InventoryRow {
+  item_name: string;
+  item_sku: string;
+  category_name: string;
+}
+
+export const MOCK_INVENTORIES: InventoryWithItem[] = [
+  {
+    inventory_id: "inv-001",
+    store_id: "store-001",
+    item_id: "item-001",
+    item_name: "국내산 청경채 (200g)",
+    item_sku: "SKU-001",
+    category_name: "채소/나물",
+    on_hand: 150,
+    reserved: 20,
+    safety_stock: 30,
+    created_at: "2024-01-05T00:00:00Z",
+    modified_at: "2024-04-10T08:00:00Z",
+    status: "AVAILABLE",
+  },
+  {
+    inventory_id: "inv-002",
+    store_id: "store-001",
+    item_id: "item-002",
+    item_name: "한우 불고기용 (500g)",
+    item_sku: "SKU-002",
+    category_name: "육류",
+    on_hand: 25,
+    reserved: 10,
+    safety_stock: 20,
+    created_at: "2024-01-06T00:00:00Z",
+    modified_at: "2024-04-10T09:00:00Z",
+    status: "AVAILABLE",
+  },
+  {
+    inventory_id: "inv-003",
+    store_id: "store-001",
+    item_id: "item-003",
+    item_name: "생연어 슬라이스 (200g)",
+    item_sku: "SKU-003",
+    category_name: "수산물",
+    on_hand: 0,
+    reserved: 0,
+    safety_stock: 15,
+    created_at: "2024-01-07T00:00:00Z",
+    modified_at: "2024-04-09T14:00:00Z",
+    status: "AVAILABLE",
+  },
+  {
+    inventory_id: "inv-004",
+    store_id: "store-001",
+    item_id: "item-004",
+    item_name: "유기농 달걀 (10구)",
+    item_sku: "SKU-004",
+    category_name: "유제품/달걀",
+    on_hand: 80,
+    reserved: 15,
+    safety_stock: 50,
+    created_at: "2024-01-08T00:00:00Z",
+    modified_at: "2024-04-10T07:30:00Z",
+    status: "AVAILABLE",
+  },
+  {
+    inventory_id: "inv-005",
+    store_id: "store-001",
+    item_id: "item-006",
+    item_name: "전통 된장 (500g)",
+    item_sku: "SKU-006",
+    category_name: "소스/양념",
+    on_hand: 3,
+    reserved: 2,
+    safety_stock: 10,
+    created_at: "2024-02-10T00:00:00Z",
+    modified_at: "2024-04-08T11:00:00Z",
+    status: "ADJUSTED",
+  },
+];

@@ -1,0 +1,131 @@
+import type { CsTicketRow, ReviewRow, CeoReviewRow } from "@/lib/types/domain/support";
+
+export interface ReviewWithCeoReply extends ReviewRow {
+  customer_name: string;
+  ceo_reply: string | null;
+}
+
+export const MOCK_CS_TICKETS: CsTicketRow[] = [
+  {
+    ticket_id: "ticket-001",
+    order_id: "order-005",
+    customer_id: "cust-005",
+    type: "REFUND",
+    cs_contents: "배송 중 상품이 파손되어 환불 요청합니다. 사진 첨부드립니다.",
+    cs_action: "",
+    created_at: "2024-04-14T17:00:00Z",
+    modified_at: "2024-04-14T17:00:00Z",
+    status: "OPEN",
+  },
+  {
+    ticket_id: "ticket-002",
+    order_id: "order-003",
+    customer_id: "cust-003",
+    type: "INQUIRY",
+    cs_contents: "주문한 상품이 언제 도착하나요? 배송이 너무 오래 걸리는 것 같습니다.",
+    cs_action: "배송 조회 안내 및 지연 사유 안내 완료",
+    created_at: "2024-04-15T15:00:00Z",
+    modified_at: "2024-04-15T16:30:00Z",
+    status: "IN_PROGRESS",
+  },
+  {
+    ticket_id: "ticket-003",
+    order_id: "order-001",
+    customer_id: "cust-001",
+    type: "EXCHANGE",
+    cs_contents: "청경채가 시들어있어 교환 요청드립니다.",
+    cs_action: "교환 처리 완료 및 재발송",
+    created_at: "2024-04-10T09:00:00Z",
+    modified_at: "2024-04-11T14:00:00Z",
+    status: "CLOSED",
+  },
+  {
+    ticket_id: "ticket-004",
+    order_id: "order-002",
+    customer_id: "cust-002",
+    type: "INQUIRY",
+    cs_contents: "쿠폰 적용이 되지 않아 문의드립니다.",
+    cs_action: "",
+    created_at: "2024-04-16T11:00:00Z",
+    modified_at: "2024-04-16T11:00:00Z",
+    status: "OPEN",
+  },
+];
+
+export const MOCK_REVIEWS: ReviewWithCeoReply[] = [
+  {
+    review_id: "review-001",
+    store_id: "store-001",
+    customer_id: "cust-003",
+    customer_name: "이지우",
+    item_id: "item-001",
+    rating: 5,
+    content: "청경채가 정말 신선하고 맛있어요! 다음에도 주문할게요.",
+    review_picture_url: null,
+    created_at: "2024-04-15T20:00:00Z",
+    modified_at: "2024-04-15T20:00:00Z",
+    status: "VISIBLE",
+    ceo_reply: "소중한 리뷰 감사드립니다! 항상 신선한 재료로 정성껏 준비하겠습니다.",
+  },
+  {
+    review_id: "review-002",
+    store_id: "store-001",
+    customer_id: "cust-001",
+    customer_name: "김민준",
+    item_id: "item-002",
+    rating: 4,
+    content: "한우가 부드럽고 맛있었는데 양이 조금 적은 것 같아요.",
+    review_picture_url: null,
+    created_at: "2024-04-12T18:00:00Z",
+    modified_at: "2024-04-12T18:00:00Z",
+    status: "VISIBLE",
+    ceo_reply: null,
+  },
+  {
+    review_id: "review-003",
+    store_id: "store-001",
+    customer_id: "cust-002",
+    customer_name: "박서연",
+    item_id: null,
+    rating: 2,
+    content: "배달이 너무 늦게 왔고 음식이 식어있었어요. 개선 부탁드립니다.",
+    review_picture_url: null,
+    created_at: "2024-04-08T21:00:00Z",
+    modified_at: "2024-04-09T10:00:00Z",
+    status: "REPORTED",
+    ceo_reply: null,
+  },
+  {
+    review_id: "review-004",
+    store_id: "store-001",
+    customer_id: "cust-004",
+    customer_name: "최준혁",
+    item_id: "item-004",
+    rating: 5,
+    content: "유기농 달걀 최고입니다. 노른자 색이 진하고 맛있어요.",
+    review_picture_url: null,
+    created_at: "2024-04-05T09:30:00Z",
+    modified_at: "2024-04-05T09:30:00Z",
+    status: "VISIBLE",
+    ceo_reply: "좋은 말씀 감사해요! 건강한 식재료를 계속 제공하겠습니다.",
+  },
+];
+
+export const MOCK_CEO_REVIEWS: CeoReviewRow[] = [
+  {
+    ceo_reviewId: "ceo-001",
+    reviewId: "review-001",
+    content: "소중한 리뷰 감사드립니다! 항상 신선한 재료로 정성껏 준비하겠습니다.",
+    created_at: "2024-04-16T10:00:00Z",
+    modified_at: "2024-04-16T10:00:00Z",
+    status: "VISIBLE",
+  },
+  {
+    ceo_reviewId: "ceo-002",
+    reviewId: "review-004",
+    content: "좋은 말씀 감사해요! 건강한 식재료를 계속 제공하겠습니다.",
+    created_at: "2024-04-05T11:00:00Z",
+    modified_at: "2024-04-05T11:00:00Z",
+    status: "VISIBLE",
+  },
+];

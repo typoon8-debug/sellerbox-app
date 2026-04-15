@@ -98,7 +98,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
 
 > 공통 컴포넌트는 스타터킷에 대부분 존재하므로, PRD의 24개 페이지를 더미 데이터로 완성합니다.
 
-- **Task 004: 공통 컴포넌트 검증 및 도메인 위젯 보강**
+- ✅ **Task 004: 공통 컴포넌트 검증 및 도메인 위젯 보강** - 완료
   - 검증: `components/admin/data-table.tsx` — PRD의 모든 목록 화면에서 재사용 가능한지 API 점검
   - 검증: `components/admin/pagination-bar.tsx`, `sortable-table-head.tsx`, `table-toolbar.tsx`, `query-field.tsx`, `query-actions.tsx`
   - 검증: `components/admin/form-field.tsx`, `confirm-dialog.tsx`, `layer-dialog.tsx`, `image-uploader.tsx`, `status-badge.tsx`
