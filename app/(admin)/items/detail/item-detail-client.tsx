@@ -489,6 +489,7 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                             onFileSelect={(file) => handleFileSelect("item_img", file)}
                             expectedWidth={375}
                             expectedHeight={375}
+                            autoResize
                             sizeHint="상품 이미지 (375×375px)"
                           />
                         </FormControl>
@@ -512,8 +513,8 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                             onChange={(url) => field.onChange(url)}
                             onFileSelect={(file) => handleFileSelect("item_detail_img_adv", file)}
                             expectedWidth={340}
-                            expectedHeight={420}
-                            sizeHint="상품상세 이미지1 (340×420px)"
+                            autoResize
+                            sizeHint="상품상세 이미지(광고) — 가로 340px 고정"
                           />
                         </FormControl>
                         <FormMessage />
@@ -538,8 +539,8 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                               handleFileSelect("item_detail_img_detail", file)
                             }
                             expectedWidth={340}
-                            expectedHeight={420}
-                            sizeHint="상품상세 이미지2 (340×420px)"
+                            autoResize
+                            sizeHint="상품상세 이미지(상세) — 가로 340px 고정"
                           />
                         </FormControl>
                         <FormMessage />
@@ -566,6 +567,7 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                             onFileSelect={(file) => handleFileSelect("item_thumbnail_small", file)}
                             expectedWidth={80}
                             expectedHeight={80}
+                            autoResize
                             sizeHint="상품 이미지 썸네일(소) (80×80px)"
                           />
                         </FormControl>
@@ -590,6 +592,7 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                             onFileSelect={(file) => handleFileSelect("item_thumbnail_big", file)}
                             expectedWidth={110}
                             expectedHeight={110}
+                            autoResize
                             sizeHint="상품 이미지 썸네일(대) (110×110px)"
                           />
                         </FormControl>

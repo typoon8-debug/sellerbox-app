@@ -27,7 +27,7 @@ import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { LayerDialog } from "@/components/admin/layer-dialog";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { createAdContent } from "@/lib/actions/domain/ad.actions";
-import { uploadImage } from "@/lib/supabase/storage";
+import { uploadImageAction } from "@/lib/actions/storage.actions";
 import type { AdContentRow } from "@/lib/types/domain/advertisement";
 import type { PaginatedResult } from "@/lib/types/api";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,14 @@ const AD_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   PAUSED: { label: "일시정지", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
   ENDED: { label: "종료", className: "bg-alert-red-bg text-alert-red border-alert-red/30" },
 };
+
+// 광고 이미지 타입 — 선택한 타입에 따라 리사이징 크기 결정
+const AD_IMAGE_TYPES = {
+  type1: { width: 375, height: 160, label: "타입1 (375×160px)" },
+  type2: { width: 345, height: 70, label: "타입2 (345×70px)" },
+} as const;
+
+type AdImageType = keyof typeof AD_IMAGE_TYPES;
 
 // UI용 폼 스키마 (placement_id, store_id는 UUID 필수)
 const contentFormSchema = z.object({
@@ -81,6 +89,8 @@ export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
   const router = useRouter();
   const [registerOpen, setRegisterOpen] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // 선택한 광고 이미지 타입 (리사이징 크기 결정)
+  const [adImageType, setAdImageType] = useState<AdImageType>("type1");
 
   const form = useForm<ContentFormValues>({
     resolver: zodResolver(contentFormSchema),
@@ -98,14 +108,16 @@ export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
   const handleSubmit = async (values: ContentFormValues) => {
     let imageUrl: string | null = values.ad_image;
 
-    // 이미지 파일이 있으면 Storage에 업로드
+    // 이미지 파일이 있으면 Storage에 업로드 (서버 액션 사용)
     if (imageFile) {
-      try {
-        imageUrl = await uploadImage("ad-images", imageFile);
-      } catch {
+      const fd = new FormData();
+      fd.append("file", imageFile);
+      const result = await uploadImageAction("ad-images", fd);
+      if (!result.ok) {
         toast.error("이미지 업로드에 실패했습니다.");
         return;
       }
+      imageUrl = result.url;
     }
 
     const result = await createAdContent({
@@ -128,6 +140,8 @@ export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
       toast.error(result.error.message ?? "등록 중 오류가 발생했습니다.");
     }
   };
+
+  const currentImageSize = AD_IMAGE_TYPES[adImageType];
 
   return (
     <div className="p-6">
@@ -155,6 +169,38 @@ export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
       >
         <Form {...form}>
           <form className="space-y-4 p-4">
+            {/* 이미지 타입 선택 */}
+            <FormItem>
+              <FormLabel>이미지 타입</FormLabel>
+              <Select
+                value={adImageType}
+                onValueChange={(v) => {
+                  setAdImageType(v as AdImageType);
+                  // 타입 변경 시 기존 이미지 초기화
+                  form.setValue("ad_image", null);
+                  setImageFile(null);
+                }}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {(
+                    Object.entries(AD_IMAGE_TYPES) as [
+                      AdImageType,
+                      (typeof AD_IMAGE_TYPES)[AdImageType],
+                    ][]
+                  ).map(([key, cfg]) => (
+                    <SelectItem key={key} value={key}>
+                      {cfg.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+
             <FormField
               control={form.control}
               name="ad_image"
@@ -168,7 +214,10 @@ export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
                         field.onChange(url);
                       }}
                       onFileSelect={(file) => setImageFile(file)}
-                      sizeHint="권장: 1200×400px"
+                      expectedWidth={currentImageSize.width}
+                      expectedHeight={currentImageSize.height}
+                      autoResize
+                      sizeHint={currentImageSize.label}
                     />
                   </FormControl>
                   <FormMessage />

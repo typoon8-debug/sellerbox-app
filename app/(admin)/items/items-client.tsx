@@ -237,9 +237,13 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
       <div className="border-separator border-b p-4">
         <div className="flex flex-wrap items-end gap-3">
           <QueryField label="가게명" required>
-            <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+            <Select
+              value={selectedStoreId}
+              onValueChange={setSelectedStoreId}
+              disabled={stores.length === 0}
+            >
               <SelectTrigger className="w-52">
-                <SelectValue placeholder="가게 선택" />
+                <SelectValue placeholder={stores.length === 0 ? "소속 가게 없음" : "가게 선택"} />
               </SelectTrigger>
               <SelectContent>
                 {stores.map((store) => (
@@ -264,6 +268,11 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
 
       {/* 상품 목록 */}
       <div className="p-6">
+        {stores.length === 0 && (
+          <div className="text-text-placeholder border-separator bg-panel mb-4 rounded border p-8 text-center text-sm">
+            소속된 가게가 없습니다. 관리자에게 가게 배정을 요청하세요.
+          </div>
+        )}
         <DataTable
           columns={columns}
           data={initialData.data}
@@ -307,6 +316,9 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
                     <ImageUploader
                       value={field.value}
                       onChange={handleImageChange}
+                      expectedWidth={400}
+                      expectedHeight={400}
+                      autoResize
                       sizeHint="권장: 400×400px"
                     />
                   </FormControl>
