@@ -33,6 +33,15 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*.local
 .env
+.env.*
+
+# 도구 임시 파일
+.playwright-mcp/
+supabase/.temp/
+.claude/scheduled_tasks.lock
+
+# 백업 / 로컬 전용
+backup/
 
 # vercel
 .vercel
