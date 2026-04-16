@@ -485,7 +485,7 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                 </div>
 
                 {/* 썸네일 영역 */}
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {/* 썸네일(소) */}
                   <FormField
                     control={form.control}

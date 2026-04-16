@@ -17,7 +17,7 @@ export function LeftPanel() {
 
       {/* 2~4depth 서브메뉴 트리 (토글) */}
       {isSubMenuOpen && (
-        <div className="flex flex-col" style={{ width: "184px" }}>
+        <div className="flex min-h-0 flex-col overflow-hidden" style={{ width: "184px" }}>
           {/* 상단 제어 버튼 */}
           <div className="border-separator flex h-9 shrink-0 items-center justify-between border-b px-2">
             {/* 화면번호 토글 */}

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
@@ -12,6 +13,21 @@ import { toast } from "sonner";
 import { SettingsMenu } from "./settings-menu";
 
 const mainMenus = MENU_TREE.filter((m) => m.section === "main");
+
+/** 메뉴 라벨: 공백 제거 후 4자 추출, 한글 4자면 2+2줄 표기 */
+function formatMenuLabel(label: string): React.ReactNode {
+  const text = label.replace(/\s/g, "").slice(0, 4);
+  if (text.length === 4 && /^[가-힣]{4}$/.test(text)) {
+    return (
+      <>
+        {text.slice(0, 2)}
+        <br />
+        {text.slice(2)}
+      </>
+    );
+  }
+  return text;
+}
 
 function MenuBarItem({ node }: { node: MenuNode }) {
   const router = useRouter();
@@ -67,9 +83,7 @@ function MenuBarItem({ node }: { node: MenuNode }) {
           )}
         >
           {Icon && <Icon className="h-4 w-4 shrink-0" />}
-          <span className="px-0.5 text-center leading-tight break-all">
-            {node.label.slice(0, 4)}
-          </span>
+          <span className="px-0.5 text-center leading-tight">{formatMenuLabel(node.label)}</span>
         </button>
       </TooltipTrigger>
       <TooltipContent side="right">

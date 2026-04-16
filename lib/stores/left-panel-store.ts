@@ -47,8 +47,8 @@ export const useLeftPanelStore = create<LeftPanelState>((set) => ({
     })),
 
   expandMenu: (id) =>
-    set((state) => ({
-      expandedIds: state.expandedIds.includes(id) ? state.expandedIds : [...state.expandedIds, id],
+    set(() => ({
+      expandedIds: [id],
     })),
 
   setSearchQuery: (q) => set({ searchQuery: q }),

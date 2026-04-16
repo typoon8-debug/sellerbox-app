@@ -510,6 +510,34 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `npm run lint` 에러 없음
   - `npm run build` 성공
 
+- ✅ **Task 028: 좌측 메뉴 UX 개선 + MDI 수직 분할 추가** - 완료
+
+  #### 요구사항
+  1. 1depth 메뉴 버튼 클릭 시 다른 펼쳐진 메뉴가 닫히지 않는 문제 (배타적 아코디언)
+  2. 서브메뉴 트리가 길어져도 스크롤바가 나타나지 않는 문제 (flex containment 깨짐)
+  3. 한글 메뉴 라벨이 공백 포함으로 잘리는 문제 (예: "가게 관리" → "가게 관")
+  4. MDI 수직 분할(좌/우) 버튼 부재 — 수평 분할(상/하)만 지원
+
+  #### Feature 1: 배타적 메뉴 펼침 (Exclusive Accordion)
+  - `lib/stores/left-panel-store.ts`: `expandMenu(id)` 로직을 `expandedIds: [id]`로 변경 — 클릭 시 기존 펼쳐진 메뉴 모두 닫고 해당 메뉴만 펼침
+
+  #### Feature 2: 서브메뉴 세로 스크롤바 복구
+  - `components/frame/left-panel.tsx`: 서브메뉴 wrapper div에 `min-h-0 overflow-hidden` 추가
+  - `components/frame/sub-menu-tree.tsx`: root div에 `min-h-0 flex-1 overflow-hidden` 추가, ScrollArea에 `min-h-0` 추가 — flex containment 체인 완성
+
+  #### Feature 3: 한글 메뉴 라벨 2줄 표기
+  - `components/frame/main-menu-bar.tsx`: `formatMenuLabel()` 함수 추가 — 공백 제거 후 4자 추출, 한글 4자(`/^[가-힣]{4}$/`) 감지 시 2+2 줄바꿈(`<br />`) 렌더링
+
+  #### Feature 4: MDI 수직 분할(좌/우) 버튼 추가
+  - `lib/stores/mdi-store.ts`: `splitDirection: "horizontal" | "vertical"` 상태 + `setSplitDirection` 액션 추가, `resetToHome`에 방향 초기화 포함
+  - `components/frame/screen-split-toggle.tsx`: 단일 토글 → 2개 버튼(수평 `Rows2` / 수직 `Columns2`) — 같은 버튼 재클릭 시 분할 해제, 다른 버튼 클릭 시 방향 전환
+  - `components/frame/mdi-content-area.tsx`: `splitDirection` 기반 `flex-col divide-y`(수평) / `flex-row divide-x`(수직) 레이아웃 동적 적용, `cn()` import 추가
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run lint` 에러 없음
+  - `npm run build` 성공
+
 ---
 
 ## 품질 체크리스트

@@ -124,7 +124,7 @@ export function SubMenuTree() {
   }, [debouncedQuery, activeSection]);
 
   return (
-    <div className="bg-panel border-separator flex flex-col border-r" style={{ width: "184px" }}>
+    <div className="bg-panel border-separator flex min-h-0 flex-1 flex-col overflow-hidden border-r">
       {/* 섹션 헤더 */}
       {activeSection === "favorite" && (
         <div className="border-separator border-b px-3 py-2">
@@ -138,7 +138,7 @@ export function SubMenuTree() {
       </div>
 
       {/* 트리 */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="py-1">
           {filteredMenus.length === 0 ? (
             <p className="text-text-placeholder px-3 py-4 text-center text-xs">

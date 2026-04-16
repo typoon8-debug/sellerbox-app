@@ -22,7 +22,8 @@ interface MdiState {
   tabs: MdiTab[];
   activeTabId: string;
   splitActive: boolean;
-  secondaryTabId: string | null; // 분할 화면 우측에 표시할 탭 ID
+  splitDirection: "horizontal" | "vertical"; // 분할 방향: horizontal(상/하), vertical(좌/우)
+  secondaryTabId: string | null; // 분할 화면에 표시할 보조 탭 ID
 
   openTab: (tab: Omit<MdiTab, "dirty">) => "opened" | "focused" | "limit";
   closeTab: (id: string) => boolean; // dirty면 false 반환 (호출자가 confirm 처리)
@@ -31,6 +32,7 @@ interface MdiState {
   reorderTabs: (fromIndex: number, toIndex: number) => void;
   setDirty: (id: string, dirty: boolean) => void;
   toggleSplit: () => void;
+  setSplitDirection: (dir: "horizontal" | "vertical") => void;
   resetToHome: () => void;
 }
 
@@ -38,6 +40,7 @@ export const useMdiStore = create<MdiState>((set, get) => ({
   tabs: [HOME_TAB],
   activeTabId: "home",
   splitActive: false,
+  splitDirection: "horizontal",
   secondaryTabId: null,
 
   openTab: (tab) => {
@@ -124,7 +127,15 @@ export const useMdiStore = create<MdiState>((set, get) => ({
     }
   },
 
+  setSplitDirection: (dir) => set({ splitDirection: dir }),
+
   resetToHome: () => {
-    set({ tabs: [HOME_TAB], activeTabId: "home", splitActive: false, secondaryTabId: null });
+    set({
+      tabs: [HOME_TAB],
+      activeTabId: "home",
+      splitActive: false,
+      splitDirection: "horizontal",
+      secondaryTabId: null,
+    });
   },
 }));
