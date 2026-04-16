@@ -18,10 +18,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   // seller 테이블에서 role 조회 (PICKER/PACKER 경로 접근 제한)
+  // OWNER는 복수 seller 레코드를 가질 수 있으므로 limit(1) 사용
   const { data: seller } = await supabase
     .from("seller")
     .select("role")
     .eq("email", user.email!)
+    .limit(1)
     .maybeSingle();
 
   if (seller) {

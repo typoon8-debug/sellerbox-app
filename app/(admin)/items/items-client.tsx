@@ -30,8 +30,10 @@ import { DomainBadge } from "@/components/admin/domain/status-badge-map";
 import { PriceDisplay } from "@/components/admin/domain/price-display";
 import { CategorySelect, ITEM_CATEGORIES } from "@/components/admin/domain/category-select";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { QueryField } from "@/components/admin/query-field";
+import { QueryActions } from "@/components/admin/query-actions";
 import { createItem, updateItem, deleteItem } from "@/lib/actions/domain/item.actions";
-import { uploadImage } from "@/lib/supabase/storage";
+import { uploadImageAction } from "@/lib/actions/storage.actions";
 import type { ItemRow } from "@/lib/types/domain/item";
 import type { PaginatedResult } from "@/lib/types/api";
 import { Plus } from "lucide-react";
@@ -66,10 +68,13 @@ const columns: DataTableColumn<ItemRow>[] = [
 
 interface ItemsClientProps {
   initialData: PaginatedResult<ItemRow>;
+  stores: { store_id: string; name: string }[];
+  initialStoreId: string;
 }
 
-export function ItemsClient({ initialData }: ItemsClientProps) {
+export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClientProps) {
   const router = useRouter();
+  const [selectedStoreId, setSelectedStoreId] = useState(initialStoreId);
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ItemRow | null>(null);
@@ -89,11 +94,19 @@ export function ItemsClient({ initialData }: ItemsClientProps) {
     },
   });
 
-  // 카테고리 필터는 클라이언트 측에서 적용 (서버 데이터는 이미 paginate로 조회됨)
-  const filteredItems =
-    categoryFilter === "ALL"
-      ? initialData.data
-      : initialData.data.filter((item) => item.category_code_value === categoryFilter);
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (selectedStoreId) params.set("store_id", selectedStoreId);
+    if (categoryFilter && categoryFilter !== "ALL") params.set("category", categoryFilter);
+    router.push(`/items?${params.toString()}`);
+  };
+
+  const handleReset = () => {
+    const firstStoreId = stores[0]?.store_id ?? "";
+    setSelectedStoreId(firstStoreId);
+    setCategoryFilter("ALL");
+    router.push(`/items${firstStoreId ? `?store_id=${firstStoreId}` : ""}`);
+  };
 
   const openRegister = () => {
     pendingFileRef.current = null;
@@ -127,9 +140,7 @@ export function ItemsClient({ initialData }: ItemsClientProps) {
    */
   const handleImageChange = (dataUrl: string | null) => {
     form.setValue("item_picture_url", dataUrl);
-    // dataUrl이 있으면 File 객체로 변환하여 ref에 저장
     if (dataUrl && dataUrl.startsWith("data:")) {
-      // base64 dataUrl → File 변환
       fetch(dataUrl)
         .then((res) => res.blob())
         .then((blob) => {
@@ -148,23 +159,22 @@ export function ItemsClient({ initialData }: ItemsClientProps) {
   const handleSubmit = async (values: ItemFormValues) => {
     let imageUrl: string | null = values.item_picture_url;
 
-    // dataUrl 형태인 경우 Storage 업로드
     if (pendingFileRef.current) {
-      try {
-        imageUrl = await uploadImage("item-images", pendingFileRef.current);
-      } catch (err) {
+      const fd = new FormData();
+      fd.append("file", pendingFileRef.current);
+      const result = await uploadImageAction("item-images", fd);
+      if (!result.ok) {
         toast.error("이미지 업로드 중 오류가 발생했습니다.");
-        console.error(err);
+        console.error(result.error);
         return;
       }
+      imageUrl = result.url;
     } else if (imageUrl?.startsWith("data:")) {
-      // dataUrl이지만 File 변환 전이면 업로드 불가 — 경고
       toast.error("이미지 처리 중입니다. 잠시 후 다시 시도해주세요.");
       return;
     }
 
     if (editTarget) {
-      // 상품 수정
       const result = await updateItem({
         item_id: editTarget.item_id,
         name: values.name,
@@ -181,9 +191,8 @@ export function ItemsClient({ initialData }: ItemsClientProps) {
       toast.success("상품 정보가 수정되었습니다.");
       setEditTarget(null);
     } else {
-      // 상품 등록
       const result = await createItem({
-        store_id: "00000000-0000-0000-0000-000000000000",
+        store_id: selectedStoreId,
         sku: `SKU-${Date.now()}`,
         category_code_value: values.category_code_value,
         category_name:
@@ -223,30 +232,53 @@ export function ItemsClient({ initialData }: ItemsClientProps) {
   const isDialogOpen = registerOpen || editTarget !== null;
 
   return (
-    <div className="p-6">
-      <div className="mb-3">
-        <CategorySelect
-          value={categoryFilter}
-          onValueChange={setCategoryFilter}
-          categories={ITEM_CATEGORIES}
-          placeholder="카테고리 필터"
-        />
+    <div>
+      {/* 검색조건 영역 */}
+      <div className="border-separator border-b p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <QueryField label="가게명" required>
+            <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+              <SelectTrigger className="w-52">
+                <SelectValue placeholder="가게 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                {stores.map((store) => (
+                  <SelectItem key={store.store_id} value={store.store_id}>
+                    {store.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </QueryField>
+          <QueryField label="카테고리">
+            <CategorySelect
+              value={categoryFilter}
+              onValueChange={setCategoryFilter}
+              categories={ITEM_CATEGORIES}
+              placeholder="전체"
+            />
+          </QueryField>
+          <QueryActions onSearch={handleSearch} onReset={handleReset} />
+        </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={filteredItems}
-        rowKey={(row) => row.item_id}
-        searchPlaceholder="상품명·SKU 검색"
-        toolbarActions={
-          <Button size="sm" onClick={openRegister}>
-            <Plus className="mr-1 h-3.5 w-3.5" />
-            상품 등록
-          </Button>
-        }
-        onRowEdit={openEdit}
-        onRowDelete={(row) => setDeleteTarget(row)}
-      />
+      {/* 상품 목록 */}
+      <div className="p-6">
+        <DataTable
+          columns={columns}
+          data={initialData.data}
+          rowKey={(row) => row.item_id}
+          searchPlaceholder="상품명·SKU 검색"
+          toolbarActions={
+            <Button size="sm" onClick={openRegister}>
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              상품 등록
+            </Button>
+          }
+          onRowEdit={openEdit}
+          onRowDelete={(row) => setDeleteTarget(row)}
+        />
+      </div>
 
       {/* 등록/수정 다이얼로그 */}
       <LayerDialog

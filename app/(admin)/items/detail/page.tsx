@@ -1,24 +1,13 @@
-// F001: 상품 관리
-// searchParams 사용 → 요청마다 서버 렌더링 (동적 데이터)
+// F001-2: 상품설명 관리
 export const dynamic = "force-dynamic";
 
 import { PageTitleBar } from "@/components/contents/page-title-bar";
-import { ItemsClient } from "@/app/(admin)/items/items-client";
+import { ItemDetailManageClient } from "@/app/(admin)/items/detail/item-detail-client";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ItemRepository } from "@/lib/repositories/item.repository";
 import { SellerRepository } from "@/lib/repositories/seller.repository";
 
-interface ItemsPageProps {
-  searchParams: Promise<{ q?: string; page?: string; category?: string; store_id?: string }>;
-}
-
-export default async function ItemsPage({ searchParams }: ItemsPageProps) {
-  const params = await searchParams;
-  const page = params.page ? parseInt(params.page, 10) : 1;
-  const search = params.q ?? "";
-  const category = params.category;
-
+export default async function ItemDetailPage() {
   // 세션 기반 로그인 사용자 email 조회
   const sessionClient = await createClient();
   const {
@@ -50,34 +39,18 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
       .from("store")
       .select("store_id, name")
       .order("created_at", { ascending: true })
-      .limit(1);
+      .limit(10);
     stores = (allStores ?? []) as { store_id: string; name: string }[];
   }
-
-  const selectedStoreId = params.store_id ?? stores[0]?.store_id ?? "";
-
-  const repo = new ItemRepository(adminSupabase);
-
-  // store_id + 카테고리 필터 적용
-  const filters: Record<string, string> = {};
-  if (selectedStoreId) filters.store_id = selectedStoreId;
-  if (category && category !== "ALL") filters.category_code_value = category;
-
-  const initialData = await repo.paginate({
-    page,
-    pageSize: 20,
-    search,
-    filters: Object.keys(filters).length > 0 ? filters : undefined,
-  });
 
   return (
     <div>
       <PageTitleBar
-        title="상품 관리"
-        screenNumber="11001"
-        breadcrumbs={[{ label: "상품 관리" }, { label: "상품 조회/목록" }]}
+        title="상품설명 관리"
+        screenNumber="11002"
+        breadcrumbs={[{ label: "상품 관리" }, { label: "상품설명 관리" }]}
       />
-      <ItemsClient initialData={initialData} stores={stores} initialStoreId={selectedStoreId} />
+      <ItemDetailManageClient stores={stores} />
     </div>
   );
 }

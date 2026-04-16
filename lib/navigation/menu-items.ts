@@ -81,6 +81,13 @@ export const MENU_TREE: MenuNode[] = [
         screenNumber: "11001",
         section: "main",
       },
+      {
+        id: "items-detail",
+        label: "상품설명 관리",
+        href: "/items/detail",
+        screenNumber: "11002",
+        section: "main",
+      },
     ],
   },
 
