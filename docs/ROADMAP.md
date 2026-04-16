@@ -361,6 +361,31 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `components/web-vitals.tsx` 신규 — `useReportWebVitals` 기반 Web Vitals 수집
   - `app/layout.tsx`에 `<WebVitals />` 추가
 
+### Phase 5: 데이터베이스 통합
+
+- ✅ **Task 024: Supabase DB 테이블 생성 및 데이터 연동** - 완료
+  - Supabase MCP 환경설정 정리 (`.mcp.json` PAT → 환경변수 참조 → 수동 토큰 설정)
+  - Supabase Management API를 통한 DB 접속 경로 확보 (PAT 재발급)
+  - DDL 마이그레이션 SQL 6개 파일 작성 (`supabase/migrations/`)
+    - `20260416000001_core_identity.sql` — tenant, users, seller, store, store_fulfillment, audit_log
+    - `20260416000002_catalog_inventory.sql` — item, item_detail, inventory, inventory_txn
+    - `20260416000003_orders_fulfillment.sql` — order, order_item, picking_task, picking_item, packing_task, label, shipment, shipment_event, dispatch_request, store_quick_policy, store_quick_timeslot, store_quick_slot_usage
+    - `20260416000004_promotion_coupon.sql` — promotion, promotion_item, coupon, coupon_issurance, coupon_redemption
+    - `20260416000005_ads_support.sql` — fp_ad_content, fp_ad_schedule, fp_ad_target, fp_ad_cap, fp_ad_log, cs_ticket, review, ceo_review
+    - `20260416000006_rls_policies.sql` — 35개 테이블 RLS 활성화 + authenticated/anon 정책
+  - Supabase Management API를 통해 마이그레이션 6개 + 시드 데이터 순차 실행 완료
+  - 기존 DB 스키마 발견 (47개 테이블 이미 존재) → `database.types.ts` 실제 DB에 맞게 동기화
+    - `users` 테이블: `is_active` → `active`, `auth_user_id` nullable, `tenant_id`/`password_hash` 추가
+    - `tenant` 테이블: `code`/`type` 컬럼 추가, `modified_at` 제거
+  - `lib/repositories/user.ts` 수정: `.eq("is_active", true)` → `.eq("active", true)`
+  - `supabase/seed.sql` 실제 DB 스키마에 맞게 수정
+  - 시드 데이터 적재 완료: tenant 3건, store 1건, item 3건, inventory 3건, order 1건, order_item 3건
+  - RLS 검증: 35개 테이블 RLS 활성화 확인
+  - 빌드 검증: `npm run typecheck` + `npm run build` 성공 (22개 라우트 정상)
+  - `vercel.json` 수정: 레거시 `env`/`functions` 블록 제거
+  - `package.json` 수정: `@next/bundle-analyzer` 버전 일치, `prepare` 방어 처리, `engines` 추가
+  - `orders/print`, `orders/labels` 페이지에 `export const dynamic = "force-dynamic"` 추가
+
 ---
 
 ## 품질 체크리스트

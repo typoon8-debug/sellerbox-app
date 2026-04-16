@@ -19,7 +19,7 @@ export class UserRepository extends BaseRepository<"users"> {
       .select("*")
       .eq("auth_user_id", authUserId)
       .eq("role", "ADMIN")
-      .eq("is_active", true)
+      .eq("active", true)
       .maybeSingle();
 
     if (error) throw new Error(error.message);

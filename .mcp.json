@@ -4,7 +4,7 @@
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=yfwbejswktamkgasdfeh&features=database,docs,development,debugging,branching,storage",
       "headers": {
-        "Authorization": "Bearer sbp_c366181f89145475dc138b29a1ca62801fa94d35"
+        "Authorization": "Bearer sbp_6efcf550873d61f31ec0c24bad4875882b32de21"
       }
     },
     "playwright": {

@@ -7,36 +7,39 @@ export type Database = {
       users: {
         Row: {
           user_id: string;
-          auth_user_id: string;
           email: string;
-          name: string;
           phone: string | null;
+          password_hash: string | null;
+          name: string;
           role: "CUSTOMER" | "SELLER" | "RIDER" | "ADMIN";
-          is_active: boolean;
+          tenant_id: string | null;
+          active: boolean;
           created_at: string;
-          updated_at: string | null;
+          auth_user_id: string | null;
         };
         Insert: {
           user_id?: string;
-          auth_user_id: string;
           email: string;
-          name: string;
           phone?: string | null;
+          password_hash?: string | null;
+          name: string;
           role: "CUSTOMER" | "SELLER" | "RIDER" | "ADMIN";
-          is_active?: boolean;
+          tenant_id?: string | null;
+          active?: boolean;
           created_at?: string;
-          updated_at?: string | null;
+          auth_user_id?: string | null;
         };
         Update: {
           user_id?: string;
-          auth_user_id?: string;
           email?: string;
-          name?: string;
           phone?: string | null;
+          password_hash?: string | null;
+          name?: string;
           role?: "CUSTOMER" | "SELLER" | "RIDER" | "ADMIN";
-          is_active?: boolean;
+          tenant_id?: string | null;
+          active?: boolean;
           created_at?: string;
-          updated_at?: string | null;
+          auth_user_id?: string | null;
         };
         Relationships: [];
       };
@@ -75,23 +78,26 @@ export type Database = {
         Row: {
           tenant_id: string;
           name: string;
+          code: string;
+          type: string;
           status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
           created_at: string;
-          modified_at: string;
         };
         Insert: {
           tenant_id?: string;
           name: string;
+          code: string;
+          type?: string;
           status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
           created_at?: string;
-          modified_at?: string;
         };
         Update: {
           tenant_id?: string;
           name?: string;
+          code?: string;
+          type?: string;
           status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
           created_at?: string;
-          modified_at?: string;
         };
         Relationships: [];
       };
