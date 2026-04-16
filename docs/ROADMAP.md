@@ -462,6 +462,34 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `npm run lint` 에러 없음
   - `npm run build` 성공 (`/items`, `/items/detail` 신규 라우트 포함)
 
+- ✅ **Task 027: 가게명 하드코딩 제거 + 이미지 Copy/Paste·리사이징 (F001·F001-2·F018)** - 완료
+
+  #### 요구사항
+  - **오류 수정**: 상품조회/목록 seller 미연결 시 테스트 매장 fallback 제거
+  - **공통 기능**: 이미지 Ctrl+V 붙여넣기 + 자동 리사이징(PNG 변환) — ImageUploader에 통합
+  - **적용 대상**: 상품 조회/목록(400×400 stretch), 상품설명 관리(5종 이미지), 광고 콘텐츠(타입 선택 드롭다운)
+
+  #### Phase A: 가게명 fallback 제거
+  - `app/(admin)/items/page.tsx`: seller 미연결 시 빈 데이터 반환 (fallback 블록 제거, 전체 조회 방지)
+  - `app/(admin)/items/detail/page.tsx`: 동일한 fallback 블록 제거
+  - `app/(admin)/items/items-client.tsx`: stores 빈 배열 시 Select disabled + "소속 가게 없음" 안내 메시지
+
+  #### Phase B: 이미지 리사이징 유틸리티
+  - `lib/utils/image-resize.ts` 신규: `resizeImage()` (stretch + fit-width 모드), `extractImageFromClipboard()`
+
+  #### Phase C: ImageUploader 개선
+  - `components/admin/image-uploader.tsx`: `autoResize` prop 추가, `processImage()` 공통 파이프라인 추출, `onPaste` 핸들러 + "또는 Ctrl+V" 안내 텍스트, `tabIndex={0}` 포커스 처리
+
+  #### Phase D: 소비자 코드 적용
+  - `app/(admin)/items/items-client.tsx`: ImageUploader에 `expectedWidth/Height={400}` + `autoResize` 추가
+  - `app/(admin)/items/detail/item-detail-client.tsx`: 5개 ImageUploader에 `autoResize` 추가 (광고/상세는 `expectedHeight` 제거 → fit-width 모드)
+  - `app/(admin)/ads/contents/ads-contents-client.tsx`: 이미지 타입 드롭다운(375×160/345×70) + `autoResize`, `uploadImage` → `uploadImageAction` 전환
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run lint` 에러 없음
+  - `npm run build` 성공
+
 ---
 
 ## 품질 체크리스트
