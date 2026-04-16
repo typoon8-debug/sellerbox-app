@@ -417,7 +417,7 @@ export type Database = {
           safety_stock: number;
           created_at: string;
           modified_at: string;
-          status: "AVAILABLE" | "RESERVED" | "DAMAGED" | "ADJUSTED";
+          status: "AVAILABLE" | "RESERVED" | "STOP";
         };
         Insert: {
           inventory_id?: string;
@@ -428,7 +428,7 @@ export type Database = {
           safety_stock?: number;
           created_at?: string;
           modified_at?: string;
-          status?: "AVAILABLE" | "RESERVED" | "DAMAGED" | "ADJUSTED";
+          status?: "AVAILABLE" | "RESERVED" | "STOP";
         };
         Update: {
           inventory_id?: string;
@@ -439,7 +439,7 @@ export type Database = {
           safety_stock?: number;
           created_at?: string;
           modified_at?: string;
-          status?: "AVAILABLE" | "RESERVED" | "DAMAGED" | "ADJUSTED";
+          status?: "AVAILABLE" | "RESERVED" | "STOP";
         };
         Relationships: [];
       };
