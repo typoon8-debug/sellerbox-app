@@ -1,4 +1,6 @@
 // F005: 라벨 관리
+export const dynamic = "force-dynamic";
+
 import { PageTitleBar } from "@/components/contents/page-title-bar";
 import { LabelsClient } from "@/app/(admin)/orders/labels/labels-client";
 import { createAdminClient } from "@/lib/supabase/admin";

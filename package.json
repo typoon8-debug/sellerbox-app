@@ -1,5 +1,8 @@
 {
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -19,7 +22,7 @@
     "test:e2e:report": "playwright show-report",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > lib/supabase/database.types.ts",
     "db:types:local": "supabase gen types typescript --local > lib/supabase/database.types.ts",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -63,7 +66,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@next/bundle-analyzer": "^16.2.3",
+    "@next/bundle-analyzer": "^15.5.15",
     "@playwright/test": "^1.56.1",
     "@types/node": "^20",
     "@types/react": "^19",

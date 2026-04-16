@@ -1,4 +1,6 @@
 // F006: 피킹리스트 출력
+export const dynamic = "force-dynamic";
+
 import { PageTitleBar } from "@/components/contents/page-title-bar";
 import {
   Table,
