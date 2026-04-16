@@ -153,6 +153,13 @@ export const MENU_TREE: MenuNode[] = [
     screenNumber: "40000",
     children: [
       {
+        id: "order-delivery-fulfillment",
+        label: "주문처리",
+        href: "/orders/fulfillment",
+        screenNumber: "40000",
+        section: "main",
+      },
+      {
         id: "order-delivery-picking",
         label: "피킹 작업 관리",
         href: "/orders/picking",
