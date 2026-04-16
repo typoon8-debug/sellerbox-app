@@ -3,6 +3,7 @@
 import { type ReactNode, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -45,6 +46,7 @@ interface DataTableProps<T> {
   onRowEdit?: (row: T) => void;
   onRowDelete?: (row: T) => void;
   onRowClick?: (row: T) => void;
+  onRowDoubleClick?: (row: T) => void;
   pagination?: PaginationInfo;
   onPageChange?: (page: number) => void;
   onSearchChange?: (query: string) => void;
@@ -59,6 +61,16 @@ interface DataTableProps<T> {
   emptyMessage?: string;
   /** 행별 추가 CSS 클래스 (예: 안전재고 경고 강조) */
   rowClassName?: (row: T) => string;
+  /** 선택된 행 강조 클래스 적용 여부 */
+  activeRowKey?: string;
+  /** 체크박스 다중선택 모드 활성화 */
+  selectable?: boolean;
+  /** 선택된 행 키 Set (controlled) */
+  selectedKeys?: Set<string>;
+  /** 선택 변경 콜백 */
+  onSelectionChange?: (keys: Set<string>) => void;
+  /** 검색 입력 숨김 여부 */
+  hideSearch?: boolean;
 }
 
 export function DataTable<T>({
@@ -70,6 +82,7 @@ export function DataTable<T>({
   onRowEdit,
   onRowDelete,
   onRowClick,
+  onRowDoubleClick,
   pagination,
   onPageChange,
   onSearchChange,
@@ -80,6 +93,11 @@ export function DataTable<T>({
   showRowActions = true,
   emptyMessage = "데이터가 없습니다.",
   rowClassName,
+  activeRowKey,
+  selectable = false,
+  selectedKeys,
+  onSelectionChange,
+  hideSearch = false,
 }: DataTableProps<T>) {
   const isControlled = searchValue !== undefined;
   const [searchInput, setSearchInput] = useState("");
@@ -94,6 +112,37 @@ export function DataTable<T>({
 
   const hasActions = showRowActions && (onRowEdit || onRowDelete);
   const totalPages = pagination ? Math.ceil(pagination.total / pagination.pageSize) : 1;
+
+  // ─── 체크박스 선택 헬퍼 ──────────────────────────────────────────────────
+  const allKeys = data.map(rowKey);
+  const allSelected = allKeys.length > 0 && allKeys.every((k) => selectedKeys?.has(k));
+  const someSelected = allKeys.some((k) => selectedKeys?.has(k));
+
+  const handleSelectAll = () => {
+    if (!onSelectionChange) return;
+    if (allSelected) {
+      // 현재 페이지 항목 전체 해제
+      const next = new Set(selectedKeys);
+      allKeys.forEach((k) => next.delete(k));
+      onSelectionChange(next);
+    } else {
+      // 현재 페이지 항목 전체 선택
+      const next = new Set(selectedKeys);
+      allKeys.forEach((k) => next.add(k));
+      onSelectionChange(next);
+    }
+  };
+
+  const handleSelectRow = (key: string) => {
+    if (!onSelectionChange) return;
+    const next = new Set(selectedKeys);
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    onSelectionChange(next);
+  };
 
   /** 컬럼 헤더 클릭 시 정렬 방향 토글 */
   const handleSortClick = (sortKey: string) => {
@@ -122,21 +171,25 @@ export function DataTable<T>({
     return pages;
   };
 
+  const totalColSpan = columns.length + (hasActions ? 1 : 0) + (selectable ? 1 : 0);
+
   return (
     <div className="flex flex-col gap-2">
       {/* 툴바 */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">{toolbarActions}</div>
-        <div className="relative">
-          <Search className="text-text-placeholder absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
-          <Input
-            placeholder={searchPlaceholder}
-            value={currentSearch}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="h-8 w-56 pl-8 text-sm"
-            aria-label="테이블 검색"
-          />
-        </div>
+        {!hideSearch && (
+          <div className="relative">
+            <Search className="text-text-placeholder absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+            <Input
+              placeholder={searchPlaceholder}
+              value={currentSearch}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="h-8 w-56 pl-8 text-sm"
+              aria-label="테이블 검색"
+            />
+          </div>
+        )}
       </div>
 
       {/* 테이블 — 가로/세로 스크롤 허용 */}
@@ -144,10 +197,20 @@ export function DataTable<T>({
         <ScrollArea className="w-full">
           <Table
             aria-rowcount={pagination ? pagination.total : data.length}
-            aria-colcount={columns.length + (hasActions ? 1 : 0)}
+            aria-colcount={totalColSpan}
           >
             <TableHeader>
               <TableRow className="bg-panel hover:bg-panel">
+                {/* 전체선택 체크박스 컬럼 헤더 */}
+                {selectable && (
+                  <TableHead className="w-10 px-3">
+                    <Checkbox
+                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="전체 선택"
+                    />
+                  </TableHead>
+                )}
                 {columns.map((col) =>
                   col.sortKey && onSortChange ? (
                     <SortableTableHead
@@ -171,7 +234,7 @@ export function DataTable<T>({
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length + (hasActions ? 1 : 0)}
+                    colSpan={totalColSpan}
                     className="text-text-placeholder h-32 text-center"
                   >
                     <span aria-label="데이터 로딩 중">불러오는 중...</span>
@@ -179,59 +242,85 @@ export function DataTable<T>({
                 </TableRow>
               ) : data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length + (hasActions ? 1 : 0)} className="h-32 p-0">
+                  <TableCell colSpan={totalColSpan} className="h-32 p-0">
                     <EmptyState title="데이터 없음" description={emptyMessage} />
                   </TableCell>
                 </TableRow>
               ) : (
-                data.map((row) => (
-                  <TableRow
-                    key={rowKey(row)}
-                    className={
-                      [onRowClick ? "cursor-pointer" : "", rowClassName ? rowClassName(row) : ""]
-                        .filter(Boolean)
-                        .join(" ") || undefined
-                    }
-                    onClick={() => onRowClick?.(row)}
-                  >
-                    {columns.map((col) => (
-                      <TableCell key={col.key} className={col.className ?? "whitespace-nowrap"}>
-                        {col.render
-                          ? col.render(row)
-                          : String((row as Record<string, unknown>)[col.key] ?? "")}
-                      </TableCell>
-                    ))}
-                    {hasActions && (
-                      <TableCell className="text-center">
-                        <div
-                          className="flex items-center justify-center gap-1"
-                          onClick={(e) => e.stopPropagation()}
+                data.map((row) => {
+                  const key = rowKey(row);
+                  const isSelected = selectedKeys?.has(key) ?? false;
+                  const isActive = activeRowKey === key;
+                  const extraClass = [
+                    onRowClick || onRowDoubleClick ? "cursor-pointer" : "",
+                    rowClassName ? rowClassName(row) : "",
+                    isActive ? "bg-blue-50 hover:bg-blue-100" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+
+                  return (
+                    <TableRow
+                      key={key}
+                      className={extraClass || undefined}
+                      onClick={() => onRowClick?.(row)}
+                      onDoubleClick={() => onRowDoubleClick?.(row)}
+                    >
+                      {/* 행 선택 체크박스 */}
+                      {selectable && (
+                        <TableCell
+                          className="w-10 px-3"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectRow(key);
+                          }}
                         >
-                          {onRowEdit && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              onClick={() => onRowEdit(row)}
-                            >
-                              수정
-                            </Button>
-                          )}
-                          {onRowDelete && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-alert-red hover:text-alert-red h-7 px-2 text-xs"
-                              onClick={() => onRowDelete(row)}
-                            >
-                              삭제
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => handleSelectRow(key)}
+                            aria-label={`행 선택 ${key}`}
+                          />
+                        </TableCell>
+                      )}
+                      {columns.map((col) => (
+                        <TableCell key={col.key} className={col.className ?? "whitespace-nowrap"}>
+                          {col.render
+                            ? col.render(row)
+                            : String((row as Record<string, unknown>)[col.key] ?? "")}
+                        </TableCell>
+                      ))}
+                      {hasActions && (
+                        <TableCell className="text-center">
+                          <div
+                            className="flex items-center justify-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {onRowEdit && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => onRowEdit(row)}
+                              >
+                                수정
+                              </Button>
+                            )}
+                            {onRowDelete && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-alert-red hover:text-alert-red h-7 px-2 text-xs"
+                                onClick={() => onRowDelete(row)}
+                              >
+                                삭제
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

@@ -2,6 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type {
   OrderStatus,
+  OrderItemStatus,
+  DeliveryMethod,
   ItemStatus,
   InventoryStatus,
   InventoryTxnStatus,
@@ -68,18 +70,13 @@ const itemStatusMap: Record<ItemStatus, BadgeConfig> = {
 
 // ─── 재고 상태 ─────────────────────────────────────────────────────────────────
 const inventoryStatusMap: Record<InventoryStatus, BadgeConfig> = {
-  AVAILABLE: { label: "정상", className: "bg-primary-light text-primary border-primary/30" },
+  AVAILABLE: { label: "가용", className: "bg-primary-light text-primary border-primary/30" },
   RESERVED: {
-    label: "예약",
+    label: "예정",
     className:
       "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
   },
-  DAMAGED: { label: "불량", className: "bg-alert-red-bg text-alert-red border-alert-red/30" },
-  ADJUSTED: {
-    label: "조정",
-    className:
-      "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700",
-  },
+  STOP: { label: "중지", className: "bg-alert-red-bg text-alert-red border-alert-red/30" },
 };
 
 // ─── 재고 트랜잭션 상태 ────────────────────────────────────────────────────────
@@ -222,6 +219,62 @@ const csTicketStatusMap: Record<CsTicketStatus, BadgeConfig> = {
   CLOSED: { label: "완료", className: "bg-primary-light text-primary border-primary/30" },
 };
 
+// ─── 주문 아이템 상태 ──────────────────────────────────────────────────────────
+const orderItemStatusMap: Record<OrderItemStatus, BadgeConfig> = {
+  ORDERED: {
+    label: "주문",
+    className:
+      "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  },
+  PACKING: {
+    label: "패킹중",
+    className:
+      "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700",
+  },
+  SHIPPED: { label: "출고", className: "bg-primary-light text-primary border-primary/30" },
+  DELIVERED: {
+    label: "배송완료",
+    className:
+      "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700",
+  },
+  CANCELED: { label: "취소", className: "bg-disabled text-text-placeholder border-separator" },
+};
+
+// ─── 배송 방식 ─────────────────────────────────────────────────────────────────
+const deliveryMethodMap: Record<DeliveryMethod, BadgeConfig> = {
+  DELIVERY: {
+    label: "배송",
+    className:
+      "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  },
+  BBQ: {
+    label: "BBQ",
+    className:
+      "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700",
+  },
+  PICKUP: { label: "픽업", className: "bg-primary-light text-primary border-primary/30" },
+  RESERVE: {
+    label: "예약",
+    className:
+      "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700",
+  },
+  FRESH_MORNING: {
+    label: "새벽",
+    className:
+      "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700",
+  },
+  SAME_DAY: {
+    label: "당일",
+    className:
+      "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700",
+  },
+  "3P_DELIVERY": {
+    label: "3PL",
+    className:
+      "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700",
+  },
+};
+
 // ─── 리뷰 상태 ─────────────────────────────────────────────────────────────────
 const reviewStatusMap: Record<ReviewStatus, BadgeConfig> = {
   VISIBLE: { label: "공개", className: "bg-primary-light text-primary border-primary/30" },
@@ -237,6 +290,8 @@ const reviewStatusMap: Record<ReviewStatus, BadgeConfig> = {
 // ─── 상태 타입 유니온 ──────────────────────────────────────────────────────────
 type DomainStatusType =
   | "order"
+  | "orderItem"
+  | "deliveryMethod"
   | "item"
   | "inventory"
   | "inventoryTxn"
@@ -252,6 +307,8 @@ type DomainStatusType =
 
 const statusMaps: Record<DomainStatusType, Record<string, BadgeConfig>> = {
   order: orderStatusMap,
+  orderItem: orderItemStatusMap,
+  deliveryMethod: deliveryMethodMap,
   item: itemStatusMap,
   inventory: inventoryStatusMap,
   inventoryTxn: inventoryTxnStatusMap,

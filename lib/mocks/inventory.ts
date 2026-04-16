@@ -75,6 +75,6 @@ export const MOCK_INVENTORIES: InventoryWithItem[] = [
     safety_stock: 10,
     created_at: "2024-02-10T00:00:00Z",
     modified_at: "2024-04-08T11:00:00Z",
-    status: "ADJUSTED",
+    status: "STOP",
   },
 ];

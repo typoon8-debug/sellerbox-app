@@ -26,7 +26,7 @@ export type ItemStatus = "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK" | "DISCONTINUED"
 export type ItemDetailStatus = "ACTIVE" | "INACTIVE";
 
 // ─── 재고 ─────────────────────────────────────────────────────────────────────
-export type InventoryStatus = "AVAILABLE" | "RESERVED" | "DAMAGED" | "ADJUSTED";
+export type InventoryStatus = "AVAILABLE" | "RESERVED" | "STOP";
 
 export type InventoryTxnType = "INBOUND" | "OUTBOUND" | "ADJUST" | "RESERVE" | "RELEASE" | "RETURN";
 

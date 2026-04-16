@@ -1,33 +1,47 @@
 // F002: 등록상품 재고관리
 // 재고 데이터는 실시간성이 중요하므로 캐시 없이 렌더링
-export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 import { PageTitleBar } from "@/components/contents/page-title-bar";
-import { InventoryClient } from "@/app/(admin)/inventory/inventory-client";
+import { InventoryMgmtClient } from "@/app/(admin)/inventory/inventory-mgmt-client";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { InventoryRepository } from "@/lib/repositories/inventory.repository";
-import { StoreRepository } from "@/lib/repositories/store.repository";
+import { SellerRepository } from "@/lib/repositories/seller.repository";
 
 export default async function InventoryPage() {
-  const supabase = createAdminClient();
+  // 세션 기반 로그인 사용자 email 조회
+  const sessionClient = await createClient();
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser();
 
-  // 첫 번째 가게의 store_id 조회 (임시 - 추후 세션 기반 seller store_id로 교체)
-  const storeRepo = new StoreRepository(supabase);
-  const stores = await storeRepo.findAll({ sortBy: "created_at", sortOrder: "asc" });
-  const storeId = stores[0]?.store_id ?? "";
+  const adminSupabase = createAdminClient();
 
-  // 재고 목록을 상품 정보와 함께 조회
-  const inventoryRepo = new InventoryRepository(supabase);
-  const data = storeId ? await inventoryRepo.findByStoreWithItemJoin(storeId) : [];
+  // 로그인한 seller의 소속 가게 목록 조회 (OWNER는 복수 가게 운영 가능)
+  let stores: { store_id: string; name: string }[] = [];
+  if (user?.email) {
+    const sellerRepo = new SellerRepository(adminSupabase);
+    const sellers = await sellerRepo.findByEmail(user.email);
+    const storeIds = [...new Set(sellers.map((s) => s.store_id).filter(Boolean))] as string[];
+
+    if (storeIds.length > 0) {
+      const { data: storeRows } = await adminSupabase
+        .from("store")
+        .select("store_id, name")
+        .in("store_id", storeIds)
+        .order("name", { ascending: true });
+      stores = (storeRows ?? []) as { store_id: string; name: string }[];
+    }
+  }
 
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <PageTitleBar
         title="등록상품 재고관리"
         screenNumber="21001"
         breadcrumbs={[{ label: "재고 관리" }, { label: "등록상품 재고관리" }]}
       />
-      <InventoryClient initialData={data} />
+      <InventoryMgmtClient stores={stores} />
     </div>
   );
 }
