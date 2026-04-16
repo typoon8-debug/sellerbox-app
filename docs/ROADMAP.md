@@ -436,8 +436,8 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
 - ✅ **Task 026: 상품조회 검색조건 추가 및 상품설명 관리 신규 화면 (F001·F001-2)** - 완료
 
   #### 요구사항
-  - **상품 조회/목록 (11001)**: 가게명·카테고리 검색조건 영역 추가, 로그인 사용자 소속 가게 선택 지원
-  - **상품설명 관리 (11002) 신규**: item_detail 테이블 CRUD 화면 — 검색조건 + 상품그리드 + 상세폼 3단 구조
+  - **상품 조회/목록 (30001)**: 가게명·카테고리 검색조건 영역 추가, 로그인 사용자 소속 가게 선택 지원
+  - **상품설명 관리 (30002) 신규**: item_detail 테이블 CRUD 화면 — 검색조건 + 상품그리드 + 상세폼 3단 구조
   - **업무규칙**: OWNER는 하나 이상의 가게를 운영할 수 있음
 
   #### Phase A: 공통 인프라
@@ -452,7 +452,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `app/(admin)/items/items-client.tsx`: QueryField + QueryActions 패턴의 검색조건 패널 추가 (가게명 Select + 카테고리 Select + 조회/초기화 버튼)
 
   #### Phase C: 상품설명 관리 신규 화면
-  - `lib/navigation/menu-items.ts`: "상품설명 관리" 메뉴 (id: items-detail, screenNumber: 11002) 등록
+  - `lib/navigation/menu-items.ts`: "상품설명 관리" 메뉴 (id: items-detail, screenNumber: 30002) 등록
   - `app/(admin)/items/detail/page.tsx` 신규: 서버 컴포넌트 (세션 기반 가게 조회)
   - `app/(admin)/items/detail/item-detail-client.tsx` 신규: 검색조건 + 상품 그리드(DataTable) + item_detail 폼 (5종 이미지 ImageUploader 포함) 3단 구조
   - `app/(admin)/items/detail/loading.tsx` 신규: 로딩 스켈레톤
@@ -614,6 +614,48 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `lib/stores/mdi-store.ts`: `splitDirection: "horizontal" | "vertical"` 상태 + `setSplitDirection` 액션 추가, `resetToHome`에 방향 초기화 포함
   - `components/frame/screen-split-toggle.tsx`: 단일 토글 → 2개 버튼(수평 `Rows2` / 수직 `Columns2`) — 같은 버튼 재클릭 시 분할 해제, 다른 버튼 클릭 시 방향 전환
   - `components/frame/mdi-content-area.tsx`: `splitDirection` 기반 `flex-col divide-y`(수평) / `flex-row divide-x`(수직) 레이아웃 동적 적용, `cn()` import 추가
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run lint` 에러 없음
+  - `npm run build` 성공
+
+- ✅ **Task 031: 메뉴 그룹 재구조화 및 화면 ID 재할당** - 완료
+
+  #### 요구사항
+  - 기존 9개 메뉴 그룹(매장관리·상품관리·재고관리·프로모션관리·쿠폰관리·광고관리·주문처리·배송관리·고객지원)을 6개 그룹으로 통합 재편
+  - 화면 번호를 새 구조 순서에 맞게 전면 재할당
+  - PRD·ROADMAP 문서에 변경사항 반영
+
+  #### 새 메뉴 구조 (6개 그룹)
+  | 그룹 | 번호 범위 | 화면 수 | 통합 전 그룹 |
+  |------|----------|---------|------------|
+  | 🖥️ 메인 (standalone) | 10000 | 1 | 배송관리 > 배송현황판 |
+  | 🏪 가게관리 | 20000~20008 | 8 | 매장관리 + 광고관리 + 쿠폰관리 |
+  | 📦 상품관리 | 30000~30005 | 5 | 상품관리 + 재고관리 + 프로모션관리 |
+  | 🚚 주문배송 | 40000~40007 | 7 | 주문처리 + 배송관리 |
+  | 👥 고객지원 | 50000~50002 | 2 | 고객지원 |
+  | ⚙️ 시스템관리 | 60000~60003 | 3 | (신규) |
+
+  #### 화면 ID 매핑 (구 → 신)
+  - 배송현황판: 구 메뉴 없음 → **10001** (메인 standalone)
+  - 가게관리: → **20001**, 가게정보관리: → **20002**
+  - 광고콘텐츠: → **20003**, 광고일정: → **20004**, 광고한도: → **20005**, 광고로그: → **20006**
+  - 쿠폰관리: → **20007**, 쿠폰발급조회: → **20008**
+  - 상품조회/목록: 11001 → **30001**, 상품설명관리: 11002 → **30002**
+  - 등록상품 재고관리: → **30003**, 프로모션관리: → **30004**, 프로모션상품관리: → **30005**
+  - 피킹: → **40001**, 패킹: → **40002**, 라벨: → **40003**, 리스트출력: → **40004**
+  - 배송요청: → **40005**, 바로퀵마감: → **40006**, 배송라우팅: → **40007**
+  - 고객CS: → **50001**, 리뷰관리: → **50002**
+  - 사용자조회: → **60001**, 공통코드관리: → **60002**, 감사로그: → **60003**
+  - 주문처리 통합(F003~F007): **40000** (주문배송 메뉴 첫 번째 항목)
+  - ※ 광고타겟(F020): URL 직접 접근 가능하나 메뉴 제외
+
+  #### 수정 파일
+  - `lib/navigation/menu-items.ts`: MENU_TREE 전면 재작성 (6개 그룹, 아이콘·screenNumber 일괄 수정)
+  - `app/(admin)/` 하위 27개 `page.tsx`: `PageTitleBar`의 `screenNumber`·`breadcrumbs`·`title` 업데이트
+  - `docs/PRD.md`: 메뉴 구조 섹션 + 화면번호 헤더 + 진입 경로 + 기능 테이블 페이지명 전면 갱신
+  - `docs/ROADMAP.md`: 본 Task 031 항목 추가
 
   #### 검증 결과
   - `npm run typecheck` 에러 없음
