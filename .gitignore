@@ -42,6 +42,7 @@ supabase/.temp/
 
 # 백업 / 로컬 전용
 backup/
+shrimp_data/
 
 # vercel
 .vercel
