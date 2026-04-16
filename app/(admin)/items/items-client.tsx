@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,7 +33,6 @@ import { ImageUploader } from "@/components/admin/image-uploader";
 import { QueryField } from "@/components/admin/query-field";
 import { QueryActions } from "@/components/admin/query-actions";
 import { createItem, updateItem, deleteItem } from "@/lib/actions/domain/item.actions";
-import { uploadImageAction } from "@/lib/actions/storage.actions";
 import type { ItemRow } from "@/lib/types/domain/item";
 import type { PaginatedResult } from "@/lib/types/api";
 import { Plus } from "lucide-react";
@@ -79,8 +78,6 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ItemRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ItemRow | null>(null);
-  // 업로드할 파일 객체를 ref로 관리 (form 값은 URL 문자열)
-  const pendingFileRef = useRef<File | null>(null);
 
   const form = useForm<ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
@@ -109,7 +106,6 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
   };
 
   const openRegister = () => {
-    pendingFileRef.current = null;
     form.reset({
       name: "",
       category_code_value: "",
@@ -122,7 +118,6 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
   };
 
   const openEdit = (row: ItemRow) => {
-    pendingFileRef.current = null;
     form.reset({
       name: row.name ?? "",
       category_code_value: row.category_code_value ?? "",
@@ -134,46 +129,7 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
     setEditTarget(row);
   };
 
-  /**
-   * ImageUploader의 onChange는 dataUrl 문자열을 반환
-   * 실제 파일 업로드는 submit 시점에 pendingFileRef를 통해 처리
-   */
-  const handleImageChange = (dataUrl: string | null) => {
-    form.setValue("item_picture_url", dataUrl);
-    if (dataUrl && dataUrl.startsWith("data:")) {
-      fetch(dataUrl)
-        .then((res) => res.blob())
-        .then((blob) => {
-          const ext = blob.type.split("/")[1] ?? "jpg";
-          const file = new File([blob], `image.${ext}`, { type: blob.type });
-          pendingFileRef.current = file;
-        })
-        .catch(() => {
-          pendingFileRef.current = null;
-        });
-    } else {
-      pendingFileRef.current = null;
-    }
-  };
-
   const handleSubmit = async (values: ItemFormValues) => {
-    let imageUrl: string | null = values.item_picture_url;
-
-    if (pendingFileRef.current) {
-      const fd = new FormData();
-      fd.append("file", pendingFileRef.current);
-      const result = await uploadImageAction("item-images", fd);
-      if (!result.ok) {
-        toast.error("이미지 업로드 중 오류가 발생했습니다.");
-        console.error(result.error);
-        return;
-      }
-      imageUrl = result.url;
-    } else if (imageUrl?.startsWith("data:")) {
-      toast.error("이미지 처리 중입니다. 잠시 후 다시 시도해주세요.");
-      return;
-    }
-
     if (editTarget) {
       const result = await updateItem({
         item_id: editTarget.item_id,
@@ -182,7 +138,7 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
         list_price: values.list_price,
         sale_price: values.sale_price,
         status: values.status,
-        item_picture_url: imageUrl,
+        item_picture_url: values.item_picture_url,
       });
       if (!result.ok) {
         toast.error(result.error.message);
@@ -201,7 +157,7 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
         name: values.name,
         list_price: values.list_price,
         sale_price: values.sale_price,
-        item_picture_url: imageUrl,
+        item_picture_url: values.item_picture_url,
         status: values.status,
       });
       if (!result.ok) {
@@ -211,7 +167,6 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
       toast.success("상품이 등록되었습니다.");
       setRegisterOpen(false);
     }
-    pendingFileRef.current = null;
     form.reset();
     router.refresh();
   };
@@ -296,7 +251,6 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
           if (!open) {
             setRegisterOpen(false);
             setEditTarget(null);
-            pendingFileRef.current = null;
           }
         }}
         title={editTarget ? "상품 수정" : "상품 등록"}
@@ -315,7 +269,7 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
                   <FormControl>
                     <ImageUploader
                       value={field.value}
-                      onChange={handleImageChange}
+                      onChange={(url) => field.onChange(url)}
                       expectedWidth={400}
                       expectedHeight={400}
                       autoResize

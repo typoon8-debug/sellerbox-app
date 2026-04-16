@@ -27,7 +27,6 @@ import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { LayerDialog } from "@/components/admin/layer-dialog";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { createAdContent } from "@/lib/actions/domain/ad.actions";
-import { uploadImageAction } from "@/lib/actions/storage.actions";
 import type { AdContentRow } from "@/lib/types/domain/advertisement";
 import type { PaginatedResult } from "@/lib/types/api";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +87,6 @@ interface AdsContentsClientProps {
 export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
   const router = useRouter();
   const [registerOpen, setRegisterOpen] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   // 선택한 광고 이미지 타입 (리사이징 크기 결정)
   const [adImageType, setAdImageType] = useState<AdImageType>("type1");
 
@@ -106,26 +104,12 @@ export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
   });
 
   const handleSubmit = async (values: ContentFormValues) => {
-    let imageUrl: string | null = values.ad_image;
-
-    // 이미지 파일이 있으면 Storage에 업로드 (서버 액션 사용)
-    if (imageFile) {
-      const fd = new FormData();
-      fd.append("file", imageFile);
-      const result = await uploadImageAction("ad-images", fd);
-      if (!result.ok) {
-        toast.error("이미지 업로드에 실패했습니다.");
-        return;
-      }
-      imageUrl = result.url;
-    }
-
     const result = await createAdContent({
       placement_id: values.placement_id,
       store_id: values.store_id,
       title: values.title,
       click_url: values.click_url || null,
-      ad_image: imageUrl,
+      ad_image: values.ad_image,
       priority: values.priority,
       status: values.status,
     });
@@ -133,7 +117,6 @@ export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
     if (result.ok) {
       toast.success("광고 콘텐츠가 등록되었습니다.");
       setRegisterOpen(false);
-      setImageFile(null);
       form.reset();
       router.refresh();
     } else {
@@ -178,7 +161,6 @@ export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
                   setAdImageType(v as AdImageType);
                   // 타입 변경 시 기존 이미지 초기화
                   form.setValue("ad_image", null);
-                  setImageFile(null);
                 }}
               >
                 <FormControl>
@@ -210,10 +192,7 @@ export function AdsContentsClient({ initialData }: AdsContentsClientProps) {
                   <FormControl>
                     <ImageUploader
                       value={field.value}
-                      onChange={(url) => {
-                        field.onChange(url);
-                      }}
-                      onFileSelect={(file) => setImageFile(file)}
+                      onChange={(url) => field.onChange(url)}
                       expectedWidth={currentImageSize.width}
                       expectedHeight={currentImageSize.height}
                       autoResize

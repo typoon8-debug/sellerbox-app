@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -38,7 +38,6 @@ import {
   updateItemDetail,
   softDeleteItemDetail,
 } from "@/lib/actions/domain/item-detail.actions";
-import { uploadImageAction } from "@/lib/actions/storage.actions";
 import type { ItemRow, ItemDetailRow } from "@/lib/types/domain/item";
 
 // UI 전용 폼 스키마
@@ -53,14 +52,6 @@ const itemDetailFormSchema = z.object({
 });
 
 type ItemDetailFormValues = z.infer<typeof itemDetailFormSchema>;
-
-// 이미지 필드 키 타입
-type ImageFieldKey =
-  | "item_img"
-  | "item_thumbnail_small"
-  | "item_thumbnail_big"
-  | "item_detail_img_adv"
-  | "item_detail_img_detail";
 
 const itemColumns: DataTableColumn<ItemRow>[] = [
   { key: "sku", header: "SKU", className: "w-28" },
@@ -93,9 +84,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
   const [isSaving, setIsSaving] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // 각 이미지 필드별 업로드 파일을 ref로 관리
-  const pendingFilesRef = useRef<Partial<Record<ImageFieldKey, File | null>>>({});
 
   const form = useForm<ItemDetailFormValues>({
     resolver: zodResolver(itemDetailFormSchema),
@@ -130,7 +118,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
       item_detail_img_detail: null,
       status: "ACTIVE",
     });
-    pendingFilesRef.current = {};
 
     const result = await fetchItemsByStore({
       store_id: selectedStoreId,
@@ -154,7 +141,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
     setItems([]);
     setSelectedItem(null);
     setCurrentDetail(null);
-    pendingFilesRef.current = {};
     form.reset();
   }, [stores, form]);
 
@@ -170,7 +156,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
       }
       setSelectedItem(item);
       setCurrentDetail(null);
-      pendingFilesRef.current = {};
       setIsDetailLoading(true);
 
       const result = await fetchItemDetailByItem({ item_id: item.item_id });
@@ -210,63 +195,21 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
     [isDirty, form]
   );
 
-  // 이미지 필드 핸들러 (onFileSelect: File 객체를 직접 받음)
-  const handleFileSelect = useCallback((field: ImageFieldKey, file: File | null) => {
-    pendingFilesRef.current[field] = file;
-  }, []);
-
-  // 이미지 업로드 처리
-  const uploadImageIfNeeded = async (field: ImageFieldKey): Promise<string | null | undefined> => {
-    const file = pendingFilesRef.current[field];
-    if (!file) return undefined; // 변경 없음 → undefined (업데이트 제외)
-    const fd = new FormData();
-    fd.append("file", file);
-    const result = await uploadImageAction("item-images", fd);
-    if (!result.ok) {
-      toast.error(`이미지 업로드 실패: ${field}`);
-      return undefined;
-    }
-    return result.url;
-  };
-
   // 저장 버튼 클릭
   const handleSave = async (values: ItemDetailFormValues) => {
     if (!selectedItem) return;
     setIsSaving(true);
-
-    // 변경된 이미지 필드만 업로드
-    const imageFields: ImageFieldKey[] = [
-      "item_img",
-      "item_thumbnail_small",
-      "item_thumbnail_big",
-      "item_detail_img_adv",
-      "item_detail_img_detail",
-    ];
-    const uploadResults = await Promise.all(imageFields.map((f) => uploadImageIfNeeded(f)));
-    const [
-      item_img,
-      item_thumbnail_small,
-      item_thumbnail_big,
-      item_detail_img_adv,
-      item_detail_img_detail,
-    ] = uploadResults;
-
-    // undefined는 변경 없음, null은 삭제
-    const resolveUrl = (uploadedUrl: string | null | undefined, formUrl: string | null) => {
-      if (uploadedUrl !== undefined) return uploadedUrl;
-      return formUrl;
-    };
 
     if (currentDetail) {
       // 수정
       const result = await updateItemDetail({
         item_detail_id: currentDetail.item_detail_id,
         description_short: values.description_short,
-        item_img: resolveUrl(item_img, values.item_img),
-        item_thumbnail_small: resolveUrl(item_thumbnail_small, values.item_thumbnail_small),
-        item_thumbnail_big: resolveUrl(item_thumbnail_big, values.item_thumbnail_big),
-        item_detail_img_adv: resolveUrl(item_detail_img_adv, values.item_detail_img_adv),
-        item_detail_img_detail: resolveUrl(item_detail_img_detail, values.item_detail_img_detail),
+        item_img: values.item_img,
+        item_thumbnail_small: values.item_thumbnail_small,
+        item_thumbnail_big: values.item_thumbnail_big,
+        item_detail_img_adv: values.item_detail_img_adv,
+        item_detail_img_detail: values.item_detail_img_detail,
         status: values.status,
       });
       setIsSaving(false);
@@ -275,7 +218,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
         return;
       }
       setCurrentDetail(result.data);
-      pendingFilesRef.current = {};
       form.reset(values); // dirty 상태 초기화
       toast.success("상품설명이 수정되었습니다.");
     } else {
@@ -285,11 +227,11 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
         item_id: selectedItem.item_id,
         store_id: storeId,
         description_short: values.description_short,
-        item_img: item_img ?? values.item_img,
-        item_thumbnail_small: item_thumbnail_small ?? values.item_thumbnail_small,
-        item_thumbnail_big: item_thumbnail_big ?? values.item_thumbnail_big,
-        item_detail_img_adv: item_detail_img_adv ?? values.item_detail_img_adv,
-        item_detail_img_detail: item_detail_img_detail ?? values.item_detail_img_detail,
+        item_img: values.item_img,
+        item_thumbnail_small: values.item_thumbnail_small,
+        item_thumbnail_big: values.item_thumbnail_big,
+        item_detail_img_adv: values.item_detail_img_adv,
+        item_detail_img_detail: values.item_detail_img_detail,
         status: values.status,
       });
       setIsSaving(false);
@@ -298,7 +240,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
         return;
       }
       setCurrentDetail(result.data);
-      pendingFilesRef.current = {};
       form.reset(values);
       toast.success("상품설명이 등록되었습니다.");
     }
@@ -316,7 +257,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
   const clearDetail = () => {
     setSelectedItem(null);
     setCurrentDetail(null);
-    pendingFilesRef.current = {};
     form.reset();
   };
 
@@ -486,7 +426,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                           <ImageUploader
                             value={field.value}
                             onChange={(url) => field.onChange(url)}
-                            onFileSelect={(file) => handleFileSelect("item_img", file)}
                             expectedWidth={375}
                             expectedHeight={375}
                             autoResize
@@ -511,7 +450,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                           <ImageUploader
                             value={field.value}
                             onChange={(url) => field.onChange(url)}
-                            onFileSelect={(file) => handleFileSelect("item_detail_img_adv", file)}
                             expectedWidth={340}
                             autoResize
                             sizeHint="상품상세 이미지(광고) — 가로 340px 고정"
@@ -535,9 +473,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                           <ImageUploader
                             value={field.value}
                             onChange={(url) => field.onChange(url)}
-                            onFileSelect={(file) =>
-                              handleFileSelect("item_detail_img_detail", file)
-                            }
                             expectedWidth={340}
                             autoResize
                             sizeHint="상품상세 이미지(상세) — 가로 340px 고정"
@@ -564,7 +499,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                           <ImageUploader
                             value={field.value}
                             onChange={(url) => field.onChange(url)}
-                            onFileSelect={(file) => handleFileSelect("item_thumbnail_small", file)}
                             expectedWidth={80}
                             expectedHeight={80}
                             autoResize
@@ -589,7 +523,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
                           <ImageUploader
                             value={field.value}
                             onChange={(url) => field.onChange(url)}
-                            onFileSelect={(file) => handleFileSelect("item_thumbnail_big", file)}
                             expectedWidth={110}
                             expectedHeight={110}
                             autoResize

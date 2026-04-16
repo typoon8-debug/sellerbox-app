@@ -490,6 +490,26 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `npm run lint` 에러 없음
   - `npm run build` 성공
 
+- ✅ **Task 027-2: 이미지 저장 에러 수정 + Ctrl+V 붙여넣기 팝업 (F001·F001-2·F018)** - 완료
+
+  #### 요구사항
+  - **오류 수정**: 이미지 선택/붙여넣기 시 base64 dataUrl이 form 상태에 저장되어 DB에 전달 → Vercel serverless 요청 바디 크기 제한(4.5MB) 초과 에러 발생
+  - **UX 개선**: Ctrl+V 붙여넣기 전용 팝업 다이얼로그 제공 (포커스 관리 문제 해결)
+
+  #### Phase A+B: ImageUploader 즉시 업로드 아키텍처 + 붙여넣기 팝업
+  - `components/admin/image-uploader.tsx` 재설계: 이미지 선택 즉시 Storage 업로드 → `onChange(publicUrl)` 반환 (base64 form 저장 완전 차단), `bucket` prop 추가, `onFileSelect` prop 제거
+  - `components/admin/image-paste-dialog.tsx` 신규: "붙여넣기" 버튼 → Radix Dialog 팝업, 자동 포커스(setTimeout 80ms), Ctrl+V 이미지 감지 + 리사이징 + 미리보기 → 확인 버튼으로 Storage 업로드
+
+  #### Phase C: 소비자 코드 단순화
+  - `app/(admin)/items/items-client.tsx`: `pendingFileRef`, `handleImageChange`, `uploadImageAction` 직접 호출 제거
+  - `app/(admin)/items/detail/item-detail-client.tsx`: `pendingFilesRef`, `handleFileSelect`, `uploadImageIfNeeded`, `resolveUrl`, `ImageFieldKey` 타입 제거 — `handleSave`에서 form 값 직접 사용
+  - `app/(admin)/ads/contents/ads-contents-client.tsx`: `imageFile` 상태 및 직접 업로드 로직 제거
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run lint` 에러 없음
+  - `npm run build` 성공
+
 ---
 
 ## 품질 체크리스트
