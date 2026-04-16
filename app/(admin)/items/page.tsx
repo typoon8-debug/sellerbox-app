@@ -44,31 +44,18 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
     }
   }
 
-  // 폴백: seller 연결이 없으면 전체 가게 목록에서 첫 번째 사용
-  if (stores.length === 0) {
-    const { data: allStores } = await adminSupabase
-      .from("store")
-      .select("store_id, name")
-      .order("created_at", { ascending: true })
-      .limit(1);
-    stores = (allStores ?? []) as { store_id: string; name: string }[];
-  }
-
   const selectedStoreId = params.store_id ?? stores[0]?.store_id ?? "";
 
-  const repo = new ItemRepository(adminSupabase);
-
-  // store_id + 카테고리 필터 적용
-  const filters: Record<string, string> = {};
-  if (selectedStoreId) filters.store_id = selectedStoreId;
-  if (category && category !== "ALL") filters.category_code_value = category;
-
-  const initialData = await repo.paginate({
-    page,
-    pageSize: 20,
-    search,
-    filters: Object.keys(filters).length > 0 ? filters : undefined,
-  });
+  // store_id가 없으면 빈 데이터 반환 (store_id 필터 없는 전체 조회 방지)
+  let initialData;
+  if (!selectedStoreId) {
+    initialData = { data: [], totalCount: 0, hasNextPage: false, page, pageSize: 20 };
+  } else {
+    const repo = new ItemRepository(adminSupabase);
+    const filters: Record<string, string> = { store_id: selectedStoreId };
+    if (category && category !== "ALL") filters.category_code_value = category;
+    initialData = await repo.paginate({ page, pageSize: 20, search, filters });
+  }
 
   return (
     <div>

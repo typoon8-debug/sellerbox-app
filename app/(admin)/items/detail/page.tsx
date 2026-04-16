@@ -33,16 +33,6 @@ export default async function ItemDetailPage() {
     }
   }
 
-  // 폴백: seller 연결이 없으면 전체 가게 목록에서 첫 번째 사용
-  if (stores.length === 0) {
-    const { data: allStores } = await adminSupabase
-      .from("store")
-      .select("store_id, name")
-      .order("created_at", { ascending: true })
-      .limit(10);
-    stores = (allStores ?? []) as { store_id: string; name: string }[];
-  }
-
   return (
     <div>
       <PageTitleBar
