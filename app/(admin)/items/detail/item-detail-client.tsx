@@ -36,7 +36,6 @@ import {
   fetchItemDetailByItem,
   createItemDetail,
   updateItemDetail,
-  softDeleteItemDetail,
 } from "@/lib/actions/domain/item-detail.actions";
 import type { ItemRow, ItemDetailRow } from "@/lib/types/domain/item";
 
@@ -83,7 +82,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const form = useForm<ItemDetailFormValues>({
     resolver: zodResolver(itemDetailFormSchema),
@@ -260,19 +258,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
     form.reset();
   };
 
-  // 행삭제 (소프트 삭제)
-  const handleDeleteDetail = async () => {
-    if (!currentDetail) return;
-    const result = await softDeleteItemDetail({ item_detail_id: currentDetail.item_detail_id });
-    setShowDeleteConfirm(false);
-    if (!result.ok) {
-      toast.error(result.error.message);
-      return;
-    }
-    toast.success("상품설명이 삭제되었습니다.");
-    clearDetail();
-  };
-
   const selectedStoreName = stores.find((s) => s.store_id === selectedItem?.store_id)?.name ?? "";
 
   return (
@@ -308,18 +293,8 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
 
       {/* 상품목록 그리드 */}
       <div className="border-separator border-b p-4">
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-medium">상품목록 : item</h3>
-          {currentDetail && (
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="h-7 text-xs"
-            >
-              -행삭제
-            </Button>
-          )}
+        <div className="mb-2">
+          <h3 className="text-sm font-medium">상품목록</h3>
         </div>
         <DataTable
           columns={itemColumns}
@@ -338,9 +313,7 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
       {/* 상품설명 입력/수정 영역 */}
       {selectedItem && (
         <div className="p-4">
-          <h3 className="border-separator mb-4 border-b pb-2 text-sm font-medium">
-            상품설명 - item_detail
-          </h3>
+          <h3 className="border-separator mb-4 border-b pb-2 text-sm font-medium">상품설명</h3>
 
           {isDetailLoading ? (
             <div className="text-text-placeholder py-8 text-center text-sm">
@@ -581,16 +554,6 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
           clearDetail();
         }}
         confirmLabel="닫기"
-      />
-
-      {/* 행삭제 확인 다이얼로그 */}
-      <ConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        title="상품설명 삭제"
-        description={`'${selectedItem?.name}' 상품의 설명을 삭제하시겠습니까? (INACTIVE 처리)`}
-        onConfirm={handleDeleteDetail}
-        confirmLabel="삭제"
       />
     </div>
   );
