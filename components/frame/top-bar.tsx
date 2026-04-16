@@ -14,7 +14,7 @@ export async function TopBar() {
         <SystemLogo />
       </div>
 
-      {/* 중: 테넌트 컨텍스트 선택 — 관리자 시스템에서는 레이아웃 유지 + invisible */}
+      {/* 중: 테넌트 컨텍스트 선택 — 백오피스에서는 레이아웃 유지 + invisible */}
       <div className="invisible flex flex-1 items-center justify-center px-8">
         <TenantContextSelector />
       </div>

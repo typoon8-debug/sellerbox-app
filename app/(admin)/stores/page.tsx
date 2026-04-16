@@ -24,7 +24,7 @@ export default async function StoresPage({ searchParams }: StoresPageProps) {
       <PageTitleBar
         title="가게 관리"
         screenNumber="12001"
-        breadcrumbs={[{ label: "가게 관리" }, { label: "가게관리" }]}
+        breadcrumbs={[{ label: "가게 관리" }, { label: "가게정보" }]}
       />
       <StoresClient initialTenants={initialTenants} />
     </div>

@@ -1,11 +1,13 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import type { ApiResponse } from "@/lib/types/api";
 import { createClient } from "@/lib/supabase/server";
 import { toApiError, UnauthorizedError } from "@/lib/errors";
 
 /**
  * 이메일/비밀번호 로그인
+ * 성공 시 서버에서 /stores로 redirect (쿠키 타이밍 문제 방지)
  */
 export async function loginAction(credentials: {
   email: string;
@@ -21,11 +23,12 @@ export async function loginAction(credentials: {
     if (error) {
       throw new UnauthorizedError("이메일 또는 비밀번호가 올바르지 않습니다.");
     }
-
-    return { ok: true, data: null };
   } catch (err) {
     return { ok: false, error: toApiError(err) };
   }
+
+  // redirect()는 NEXT_REDIRECT를 throw하므로 try-catch 바깥에 위치해야 함
+  redirect("/stores");
 }
 
 /**

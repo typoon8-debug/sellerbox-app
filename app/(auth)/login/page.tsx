@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -21,7 +20,6 @@ import { loginAction } from "@/app/_actions/auth";
 import { Mail } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<LoginFormValues>({
@@ -31,12 +29,12 @@ export default function LoginPage() {
 
   const onSubmit = (values: LoginFormValues) => {
     startTransition(async () => {
+      // 성공 시 서버 액션에서 /stores로 redirect 처리
+      // 에러 케이스에서만 result가 반환됨
       const result = await loginAction({ email: values.email, password: values.password });
-      if (!result.ok) {
+      if (result && !result.ok) {
         toast.error(result.error.message);
-        return;
       }
-      router.push("/stores");
     });
   };
 

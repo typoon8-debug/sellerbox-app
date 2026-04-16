@@ -41,14 +41,29 @@ export const MENU_TREE: MenuNode[] = [
 
   // ─── 메인 업무 메뉴 ────────────────────────────────────────────────────────
 
-  // 가게 관리 (F012·F013 통합)
+  // 가게 관리 (F012·F013)
   {
     id: "stores",
     label: "가게 관리",
     icon: Store,
-    href: "/stores",
-    screenNumber: "12001",
     section: "main",
+    screenNumber: "12000",
+    children: [
+      {
+        id: "stores-info",
+        label: "가게정보",
+        href: "/stores",
+        screenNumber: "12001",
+        section: "main",
+      },
+      {
+        id: "stores-manage",
+        label: "가게정보 관리",
+        href: "/stores/info",
+        screenNumber: "12002",
+        section: "main",
+      },
+    ],
   },
 
   // 상품 관리 (F001)
