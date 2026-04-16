@@ -57,7 +57,7 @@ export default async function ShipmentsDashboardPage() {
       <PageTitleBar
         title="배송현황판"
         screenNumber="10001"
-        breadcrumbs={[{ label: "메인" }, { label: "배송현황판" }]}
+        breadcrumbs={[{ label: "홈" }, { label: "배송현황판" }]}
       />
       <DashboardClient initialStats={stats} initialEvents={eventsResult.data} />
     </div>

@@ -21,10 +21,10 @@ export interface MenuNode {
 }
 
 export const MENU_TREE: MenuNode[] = [
-  // ─── 메인 (10000) ─────────────────────────────────────────────────────────
+  // ─── 홈 (10000) ──────────────────────────────────────────────────────────
   {
     id: "main",
-    label: "메인",
+    label: "홈",
     icon: LayoutDashboard,
     href: "/shipments/dashboard",
     screenNumber: "10001",
