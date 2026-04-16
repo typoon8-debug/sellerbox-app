@@ -510,6 +510,88 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `npm run lint` 에러 없음
   - `npm run build` 성공
 
+- ✅ **Task 029: 등록상품 재고관리 4건 개선 (F002)** - 완료
+
+  #### 요구사항
+  1. **조회조건 Panel 2 동시 적용**: 카테고리/상품명 검색조건이 Panel 1에만 적용되고 Panel 2에는 미적용 오류 수정
+  2. **재고 상태값 변경**: AVAILABLE(가용)·RESERVED(예정)·STOP(중지) — DAMAGED·ADJUSTED 제거
+  3. **취소처리**: 재고 상태를 DAMAGED → STOP으로 변경
+  4. **생성처리 개선**: STOP 상태 재고 재활성화 지원
+
+  #### 개선 1: 조회조건 Panel 2 동시 적용
+  - `lib/schemas/domain/inventory.schema.ts`: `fetchInventoryByStoreSchema`에 `category`·`search` 필드 추가
+  - `lib/repositories/inventory.repository.ts`: `findByStoreWithItemJoin()`에 `filters?: { category, search }` 파라미터 추가 — Supabase `referencedTable` 옵션으로 item JOIN 필터링
+  - `lib/actions/domain/inventory.actions.ts`: `fetchInventoryByStore` 액션에서 category·search → 리포지토리 전달
+  - `app/(admin)/inventory/inventory-mgmt-client.tsx`: `doSearch()`의 `fetchInventoryByStore` 호출에 category·search 전달
+
+  #### 개선 2: 재고 상태값 변경
+  - `lib/types/domain/enums.ts`: `InventoryStatus` = `"AVAILABLE" | "RESERVED" | "STOP"` (DAMAGED·ADJUSTED 제거)
+  - `lib/supabase/database.types.ts`: inventory Row·Insert·Update 3곳의 status 타입 동기화
+  - `components/admin/domain/status-badge-map.tsx`: 배지 매핑 변경 — AVAILABLE(가용)·RESERVED(예정)·STOP(중지)
+  - `lib/mocks/inventory.ts`: mock 데이터 status `"ADJUSTED"` → `"STOP"` 수정
+  - `supabase/migrations/20260417000002_inventory_status_update.sql` 신규: DAMAGED/ADJUSTED → STOP 일괄 변환 + CHECK 제약 변경
+
+  #### 개선 3: 취소처리 STOP 변경
+  - `lib/actions/domain/inventory.actions.ts`: `deactivateInventoryBatch`에서 `status: "DAMAGED"` → `status: "STOP"`
+  - `app/(admin)/inventory/inventory-mgmt-client.tsx`: 확인 다이얼로그 제목·설명·버튼 "비활성화" → "중지" 텍스트 일괄 변경
+
+  #### 개선 4: 생성처리 STOP 재활성화
+  - `lib/repositories/inventory.repository.ts`: `findExistingItemIds()` → `findExistingItems()` — item_id·inventory_id·status 반환
+  - `lib/actions/domain/inventory.actions.ts`: `createInventoryBatch` 로직 개선
+    - 없으면: 신규 생성 (AVAILABLE)
+    - 있고 STOP이면: AVAILABLE로 재활성화
+    - 있고 AVAILABLE이면: 스킵 후 "이미 존재" 메시지
+    - 반환: `{ createdCount, reactivatedCount, skippedCount }`
+  - `app/(admin)/inventory/inventory-mgmt-client.tsx`: `handleCreateInventory` 토스트 메시지 분기 (생성/재활성화/이미존재)
+
+  #### 부가 수정: Zod UUID 검증 호환성
+  - `lib/schemas/domain/inventory.schema.ts`: 전체 `z.string().uuid()` → `z.string().min(1)` 변경 — Zod v4의 엄격한 RFC 4122 검증이 seed UUID 형식과 불일치하는 버그 수정
+
+  #### 검증 결과
+  - `npm run check-all` (TypeScript + ESLint + Prettier) 전체 통과
+  - `npm run build` 성공
+
+- ✅ **Task 030: 주문처리 통합 화면 (F003·F004·F005·F006·F007)** - 완료
+
+  #### 요구사항
+  - 피킹→패킹→라벨출력→배송요청 4단계가 개별 화면으로 분리되어, 2~4시간 배송주기 내 10~20건 주문을 30분 이내 일괄 처리하기 어려운 문제 해결
+  - `/orders/fulfillment` (화면번호: 31010) 신규 통합 화면 구현
+
+  #### 신규 파일
+
+  **서버 액션 / 스키마 / 훅**
+  - `lib/schemas/domain/order-fulfillment.schema.ts` 신규: 10개 Zod 스키마 (fetchOrders, fetchItems, fetchStats, batchPicking, batchPacking, batchLabels, batchDispatch, updateOrderStatus, fetchDispatch, fetchPrint)
+  - `lib/actions/domain/order-fulfillment.actions.ts` 신규: 10개 Server Action (`fetchOrdersForFulfillment`, `fetchOrderItemsWithInventory`, `fetchDashboardStats`, `batchStartPicking`, `batchCompletePacking`, `batchGenerateLabels`, `batchCreateDispatchRequests`, `updateOrderStatus`, `fetchDispatchRequestsByStore`, `fetchPrintData`)
+  - `lib/hooks/use-order-realtime.ts` 신규: Supabase Realtime store_id 필터 구독 + Web Audio API "딩동" 알림음 (`playDingDong`) — 외부 MP3 파일 불필요
+
+  **Server Component / 페이지**
+  - `app/(admin)/orders/fulfillment/page.tsx` 신규: `force-dynamic` Server Component, 가게 목록 + 초기 대시보드 통계 로드
+  - `app/(admin)/orders/fulfillment/loading.tsx` 신규: 4-패널 스켈레톤 UI
+
+  **소형 컴포넌트**
+  - `app/(admin)/orders/fulfillment/components/dashboard-cards.tsx` 신규: 금일 주문수·피킹대기·패킹대기·배송요청 카드 4종
+  - `app/(admin)/orders/fulfillment/components/alert-banner.tsx` 신규: "딩동~~ 주문이 접수 되었습니다!!" 배너 (5초 자동 해제)
+  - `app/(admin)/orders/fulfillment/components/order-status-select.tsx` 신규: 주문 상태 인라인 수정 Select (stopPropagation으로 행 선택 충돌 방지)
+  - `app/(admin)/orders/fulfillment/components/print-list-dialog.tsx` 신규: 카테고리별 피킹집계 + 주문별 상세 2패널 인쇄 다이얼로그
+
+  **4-패널 컴포넌트**
+  - `app/(admin)/orders/fulfillment/panels/order-list-panel.tsx` 신규: Panel 1 — 체크박스 다중선택 DataTable + 배송구분 탭 필터 6종
+  - `app/(admin)/orders/fulfillment/panels/order-detail-panel.tsx` 신규: Panel 2 — order_item + inventory JOIN, on_hand < qty 경고 하이라이트
+  - `app/(admin)/orders/fulfillment/panels/processing-panel.tsx` 신규: Panel 3 — [피킹][패킹][라벨출력] 버튼 + 처리결과 테이블
+  - `app/(admin)/orders/fulfillment/panels/dispatch-panel.tsx` 신규: Panel 4 — [배송요청] 버튼 + dispatch_request 테이블
+  - `app/(admin)/orders/fulfillment/fulfillment-client.tsx` 신규: 4-패널 MDI 오케스트레이터 (useState + useTransition + useCallback 패턴)
+
+  #### 수정 파일
+  - `lib/repositories/order.repository.ts`: `DashboardStats` 인터페이스 + `findByStoreAndDateRange()` + `getStats()` 추가
+  - `lib/repositories/order-item.repository.ts`: `findByOrderId()` 추가
+  - `lib/navigation/menu-items.ts`: "주문처리" 메뉴 (id: orders-fulfillment, screenNumber: 31010) 추가
+  - `components/admin/domain/status-badge-map.tsx`: `orderItem` 배지 맵 + `deliveryMethod` 배지 맵 추가, `DomainStatusType` 유니온 확장
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run check-all` (TypeScript + ESLint + Prettier) 전체 통과
+  - `npm run build` 성공 (`/orders/fulfillment` 11.4 kB, 29개 라우트)
+
 - ✅ **Task 028: 좌측 메뉴 UX 개선 + MDI 수직 분할 추가** - 완료
 
   #### 요구사항
