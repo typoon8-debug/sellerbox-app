@@ -12,7 +12,7 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "온라인쇼핑몰 관리자 시스템",
+  title: "셀러박스",
   description: "입점사·가맹점 통합 관리 백오피스",
 };
 

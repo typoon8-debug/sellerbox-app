@@ -36,7 +36,7 @@ export default function LoginPage() {
         toast.error(result.error.message);
         return;
       }
-      router.push("/tenants");
+      router.push("/stores");
     });
   };
 
@@ -45,7 +45,7 @@ export default function LoginPage() {
       <div className="bg-control border-separator shadow-popup w-full max-w-sm rounded border p-8">
         {/* 헤더 */}
         <div className="mb-8 text-center">
-          <h1 className="text-text-body text-2xl font-bold">관리자 시스템</h1>
+          <h1 className="text-text-body text-2xl font-bold">셀러박스</h1>
           <p className="text-text-placeholder mt-1 text-sm">관리자 계정으로 로그인하세요</p>
         </div>
 

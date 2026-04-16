@@ -20,7 +20,7 @@ export default async function RootPage({
   const { data } = await supabase.auth.getClaims();
 
   if (data?.claims) {
-    redirect(`/tenants${embedSuffix}`);
+    redirect(`/stores${embedSuffix}`);
   } else {
     redirect("/login");
   }

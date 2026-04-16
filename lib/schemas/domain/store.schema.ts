@@ -22,9 +22,33 @@ export const updateStoreSchema = z.object({
   name: z.string().min(1).optional(),
   store_category: z.string().optional(),
   address: z.string().optional(),
+  store_picture: z.string().optional(),
   phone: z.string().optional(),
+  // DB 오타 유지: contnet (content의 오타)
+  contnet: z.string().optional(),
   min_delivery_price: z.number().int().min(0).optional(),
   delivery_tip: z.number().int().min(0).optional(),
+  min_delivery_time: z.number().int().min(0).optional(),
+  max_delivery_time: z.number().int().min(0).optional(),
+  // 포인트 관련
+  points_enabled: z.number().int().optional(),
+  accrual_rate_pct: z.number().optional(),
+  redeem_enabled: z.number().int().optional(),
+  min_redeem_unit: z.number().int().optional(),
+  max_redeem_rate_pct: z.number().optional(),
+  max_redeem_amount: z.number().int().optional(),
+  expire_after_days: z.number().int().optional(),
+  rounding_mode: z.string().optional(),
+  // 운영 관련
+  operation_hours: z.string().optional(),
+  closed_days: z.string().optional(),
+  // DB 오타 유지: delivery_dddress (delivery_address의 오타)
+  delivery_dddress: z.string().optional(),
+  // 사업자 정보
+  reg_number: z.string().optional(),
+  jumin_number: z.string().optional(),
+  ceo_name: z.string().optional(),
+  reg_code: z.string().optional(),
   fee: z.number().min(0).optional(),
   contract_start_at: z.string().optional(),
   contract_end_at: z.string().optional(),

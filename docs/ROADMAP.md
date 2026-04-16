@@ -386,6 +386,53 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `package.json` 수정: `@next/bundle-analyzer` 버전 일치, `prepare` 방어 처리, `engines` 추가
   - `orders/print`, `orders/labels` 페이지에 `export const dynamic = "force-dynamic"` 추가
 
+### Phase 6: 버그 수정 및 UI/UX 개선
+
+- ✅ **Task 025: 에러 수정 및 가게관리 화면 재구성** - 완료
+
+  #### Phase 0: 에러 수정
+  - `components/frame/system-logo.tsx`: 사이드바 로고 `"관리자 시스템"` → `"셀러박스"` 변경
+  - `app/layout.tsx`: HTML `<title>` `"온라인쇼핑몰 관리자 시스템"` → `"셀러박스"` 변경
+  - `e2e/auth.spec.ts`: 로그인 페이지 h1 assertion `"관리자 시스템"` → `"셀러박스"` 수정
+  - `app/(admin)/users/page.tsx` 신규: `/users` 404 해결 — `PageTitleBar` + `EmptyState` 플레이스홀더 생성
+
+  #### Phase 1: 인프라 구축
+  - `lib/repositories/tenant.repository.ts` 신규: `BaseRepository<"tenant">` 상속, name·code ILIKE 검색
+  - `lib/repositories/store.repository.ts`: `findByTenantId(tenantId)` 메서드 추가
+  - `lib/schemas/domain/store.schema.ts`: `updateStoreSchema` 필드 확장 (포인트·배달시간·운영·사업자 등 16개 필드)
+  - 6개 Zod 스키마 신규: `tenant.schema.ts`, `seller.schema.ts`, `store-fulfillment.schema.ts`, `store-quick-policy.schema.ts`, `store-quick-timeslot.schema.ts`, `store-quick-slot-usage.schema.ts`
+  - 7개 Server Actions 신규: `tenant.actions.ts`, `seller.actions.ts`, `store-fulfillment.actions.ts`, `store-quick-policy.actions.ts`, `store-quick-timeslot.actions.ts`, `store-quick-slot-usage.actions.ts`, `store-query.actions.ts`
+
+  #### Phase 2: 메뉴 구조 변경
+  - `lib/navigation/menu-items.ts`: "가게 관리" 메뉴를 단일 leaf(`/stores`)로 변경 (기존 `stores-info` 서브메뉴 제거)
+  - 기존 "테넌트 관리" 상위 메뉴 항목 제거 (가게관리에 통합)
+
+  #### Phase 3: 가게관리 화면 재구성 (F012 + F013 통합)
+  - `app/(admin)/stores/page.tsx`: 테넌트 초기 데이터 로드 Server Component로 재설계
+  - `app/(admin)/stores/stores-client.tsx`: 테넌트→가게→상세 마스터-디테일 3단 상태 오케스트레이터로 전면 재작성
+  - `app/(admin)/stores/_components/tenant-search-grid.tsx` 신규: 테넌트 검색 + Grid (클라이언트 사이드 필터)
+  - `app/(admin)/stores/_components/store-grid.tsx` 신규: 선택 테넌트의 가게 목록, 행추가/삭제
+  - `app/(admin)/stores/_components/store-detail-form.tsx` 신규: 가게 전체 필드 편집 폼 (7행 레이아웃)
+  - `app/(admin)/stores/_components/store-register-dialog.tsx` 신규: 가게 신규 등록 LayerDialog
+  - `app/(admin)/stores/_components/store-info-tabs.tsx` 신규: 5개 탭 통합 컴포넌트
+  - `app/(admin)/stores/_components/tabs/fulfillment-tab.tsx` 신규: 배송정보 CRUD
+  - `app/(admin)/stores/_components/tabs/sellers-tab.tsx` 신규: 판매원 CRUD
+  - `app/(admin)/stores/_components/tabs/quick-policy-tab.tsx` 신규: 바로퀵정책 CRUD
+  - `app/(admin)/stores/_components/tabs/timeslot-tab.tsx` 신규: 운행표 CRUD
+  - `app/(admin)/stores/_components/tabs/slot-usage-tab.tsx` 신규: 슬롯카운트 CRUD
+
+  #### Phase 4: 기존 stores/info 처리
+  - `app/(admin)/stores/info/page.tsx`: `/stores`로 redirect 변환 (기능 통합으로 인한 레거시 경로 처리)
+
+  #### TypeScript 에러 수정
+  - `z.coerce.number()` → `z.number()` + `valueAsNumber` 패턴으로 @hookform/resolvers v5 호환성 해결 (quick-policy-tab, timeslot-tab, slot-usage-tab)
+  - `z.boolean().default(true)` → `z.boolean()` + `defaultValues`에 명시적 기본값 (fulfillment-tab)
+  - `stores-client.tsx` 미사용 `setTenants` 제거
+
+  #### 검증 결과
+  - `npm run check-all` (TypeScript + ESLint + Prettier) 전체 통과
+  - `npm run build` 성공 (23개 라우트, `/stores` 포함)
+
 ---
 
 ## 품질 체크리스트

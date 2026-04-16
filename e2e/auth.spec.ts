@@ -2,7 +2,7 @@
  * E2E 테스트: 인증 플로우
  *
  * 로그인, 로그아웃, 역할별 라우팅 및 접근 제어를 검증합니다.
- * - 정상 로그인 → /tenants 리다이렉트 확인
+ * - 정상 로그인 → /stores 리다이렉트 확인
  * - 잘못된 자격증명 → 에러 메시지 표시
  * - 로그아웃 → /login 리다이렉트
  * - 인증 없이 보호된 경로 접근 → /login 리다이렉트
@@ -40,7 +40,7 @@ test.describe("로그인 플로우", () => {
 
   test("로그인 페이지가 정상적으로 렌더링된다", async ({ page }) => {
     // 페이지 타이틀 또는 헤더 확인
-    await expect(page.locator("h1")).toContainText("관리자 시스템");
+    await expect(page.locator("h1")).toContainText("셀러박스");
     // 이메일 입력 필드 존재 확인
     await expect(page.locator('input[type="email"], input[name="email"]')).toBeVisible();
     // 비밀번호 입력 필드 존재 확인
@@ -49,12 +49,12 @@ test.describe("로그인 플로우", () => {
     await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 
-  test("올바른 자격증명으로 로그인하면 /tenants로 리다이렉트된다", async ({ page }) => {
+  test("올바른 자격증명으로 로그인하면 /stores로 리다이렉트된다", async ({ page }) => {
     await fillLoginForm(page, TEST_CREDENTIALS.OWNER.email, TEST_CREDENTIALS.OWNER.password);
 
-    // 로그인 후 /tenants 또는 /stores로 리다이렉트 확인
+    // 로그인 후 /stores 또는 /stores로 리다이렉트 확인
     await page.waitForURL(
-      (url) => url.pathname.startsWith("/tenants") || url.pathname.startsWith("/stores"),
+      (url) => url.pathname.startsWith("/stores") || url.pathname.startsWith("/stores"),
       { timeout: 15000 }
     );
 
@@ -92,7 +92,7 @@ test.describe("로그아웃 플로우", () => {
 
     // 로그인 완료 대기
     await page.waitForURL(
-      (url) => url.pathname.startsWith("/tenants") || url.pathname.startsWith("/stores"),
+      (url) => url.pathname.startsWith("/stores") || url.pathname.startsWith("/stores"),
       { timeout: 15000 }
     );
 

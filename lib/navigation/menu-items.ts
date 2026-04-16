@@ -31,39 +31,24 @@ export interface MenuNode {
 export const MENU_TREE: MenuNode[] = [
   // ─── 즐겨찾기 ──────────────────────────────────────────────────────────────
   {
-    id: "fav-tenants",
-    label: "테넌트 관리",
+    id: "fav-stores",
+    label: "가게관리",
     icon: Building2,
-    href: "/tenants",
+    href: "/stores",
     screenNumber: "10001",
     section: "favorite",
   },
 
   // ─── 메인 업무 메뉴 ────────────────────────────────────────────────────────
 
-  // 가게 관리 (F012·F013)
+  // 가게 관리 (F012·F013 통합)
   {
     id: "stores",
     label: "가게 관리",
     icon: Store,
+    href: "/stores",
+    screenNumber: "12001",
     section: "main",
-    screenNumber: "12000",
-    children: [
-      {
-        id: "stores-list",
-        label: "가게 조회/목록",
-        href: "/stores",
-        screenNumber: "12001",
-        section: "main",
-      },
-      {
-        id: "stores-info",
-        label: "가게 정보 관리",
-        href: "/stores/info",
-        screenNumber: "12002",
-        section: "main",
-      },
-    ],
   },
 
   // 상품 관리 (F001)
@@ -301,23 +286,7 @@ export const MENU_TREE: MenuNode[] = [
     ],
   },
 
-  // ─── 플랫폼 관리 (스타터킷 기존 항목) ─────────────────────────────────────
-  {
-    id: "tenants",
-    label: "테넌트 관리",
-    icon: Building2,
-    section: "main",
-    screenNumber: "10000",
-    children: [
-      {
-        id: "tenants-list",
-        label: "테넌트 조회/목록",
-        href: "/tenants",
-        screenNumber: "10001",
-        section: "main",
-      },
-    ],
-  },
+  // ─── 플랫폼 관리 ──────────────────────────────────────────────────────────
   {
     id: "users",
     label: "사용자 관리",

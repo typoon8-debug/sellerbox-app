@@ -54,6 +54,18 @@ VALUES (
 )
 ON CONFLICT (seller_id) DO NOTHING;
 
+-- 판매원 (MANAGER) - PRD 테스트 계정
+INSERT INTO seller (seller_id, email, name, role, store_id, is_active)
+VALUES (
+  '00000000-0000-0000-0000-000000000021',
+  'typoon8@gmail.com',
+  '매장관리자',
+  'MANAGER',
+  '00000000-0000-0000-0000-000000000100',
+  'ACTIVE'
+)
+ON CONFLICT (seller_id) DO NOTHING;
+
 -- 가게 풀필먼트 (배달, 픽업)
 INSERT INTO store_fulfillment (id, store_id, fulfillment_type, active)
 VALUES
