@@ -17,8 +17,8 @@ export default async function OrdersLabelsPage() {
     <div>
       <PageTitleBar
         title="라벨 관리"
-        screenNumber="31003"
-        breadcrumbs={[{ label: "주문 처리" }, { label: "라벨 관리" }]}
+        screenNumber="40003"
+        breadcrumbs={[{ label: "주문배송" }, { label: "라벨 관리" }]}
       />
       <LabelsClient initialData={labels} />
     </div>

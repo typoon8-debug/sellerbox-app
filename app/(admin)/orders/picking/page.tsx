@@ -23,8 +23,8 @@ export default async function OrdersPickingPage() {
     <div>
       <PageTitleBar
         title="피킹 작업 관리"
-        screenNumber="31001"
-        breadcrumbs={[{ label: "주문 처리" }, { label: "피킹 작업 관리" }]}
+        screenNumber="40001"
+        breadcrumbs={[{ label: "주문배송" }, { label: "피킹 작업 관리" }]}
       />
       <PickingClient initialData={result.data} />
     </div>

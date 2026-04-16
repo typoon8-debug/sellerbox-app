@@ -36,9 +36,9 @@ export default async function ItemDetailPage() {
   return (
     <div>
       <PageTitleBar
-        title="상품설명 관리"
-        screenNumber="11002"
-        breadcrumbs={[{ label: "상품 관리" }, { label: "상품설명 관리" }]}
+        title="상품설명관리"
+        screenNumber="30002"
+        breadcrumbs={[{ label: "상품관리" }, { label: "상품설명관리" }]}
       />
       <ItemDetailManageClient stores={stores} />
     </div>

@@ -7,9 +7,9 @@ export default function UsersPage() {
   return (
     <div>
       <PageTitleBar
-        title="사용자 관리"
-        screenNumber="20001"
-        breadcrumbs={[{ label: "사용자 관리" }, { label: "사용자 조회/목록" }]}
+        title="사용자 조회/목록"
+        screenNumber="60001"
+        breadcrumbs={[{ label: "시스템관리" }, { label: "사용자 조회/목록" }]}
       />
       <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
         <EmptyState

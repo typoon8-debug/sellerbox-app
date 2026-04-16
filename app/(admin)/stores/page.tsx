@@ -22,9 +22,9 @@ export default async function StoresPage({ searchParams }: StoresPageProps) {
   return (
     <div>
       <PageTitleBar
-        title="가게 관리"
-        screenNumber="12001"
-        breadcrumbs={[{ label: "가게 관리" }, { label: "가게정보" }]}
+        title="가게관리"
+        screenNumber="20001"
+        breadcrumbs={[{ label: "가게관리" }, { label: "가게관리" }]}
       />
       <StoresClient initialTenants={initialTenants} />
     </div>

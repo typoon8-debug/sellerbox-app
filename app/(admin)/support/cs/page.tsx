@@ -39,9 +39,9 @@ export default async function SupportCsPage({
   return (
     <div>
       <PageTitleBar
-        title="CS 관리"
-        screenNumber="80001"
-        breadcrumbs={[{ label: "고객 지원" }, { label: "CS 관리" }]}
+        title="고객 CS"
+        screenNumber="50001"
+        breadcrumbs={[{ label: "고객지원" }, { label: "고객 CS" }]}
       />
       <CsClient
         initialData={initialData}

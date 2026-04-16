@@ -40,9 +40,9 @@ export default async function AdsLogsPage({
   return (
     <div>
       <PageTitleBar
-        title="광고 로그"
-        screenNumber="70005"
-        breadcrumbs={[{ label: "광고 관리" }, { label: "광고 로그" }]}
+        title="광고로그"
+        screenNumber="20006"
+        breadcrumbs={[{ label: "가게관리" }, { label: "광고로그" }]}
       />
       <AdsLogsClient
         initialData={initialData}

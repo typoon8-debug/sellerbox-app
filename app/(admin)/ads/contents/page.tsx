@@ -36,9 +36,9 @@ export default async function AdsContentsPage({
   return (
     <div>
       <PageTitleBar
-        title="광고 콘텐츠"
-        screenNumber="70001"
-        breadcrumbs={[{ label: "광고 관리" }, { label: "광고 콘텐츠" }]}
+        title="광고콘텐츠"
+        screenNumber="20003"
+        breadcrumbs={[{ label: "가게관리" }, { label: "광고콘텐츠" }]}
       />
       <AdsContentsClient initialData={initialData} />
     </div>

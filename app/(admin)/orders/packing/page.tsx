@@ -23,8 +23,8 @@ export default async function OrdersPackingPage() {
     <div>
       <PageTitleBar
         title="패킹 작업 관리"
-        screenNumber="31002"
-        breadcrumbs={[{ label: "주문 처리" }, { label: "패킹 작업 관리" }]}
+        screenNumber="40002"
+        breadcrumbs={[{ label: "주문배송" }, { label: "패킹 작업 관리" }]}
       />
       <PackingClient initialData={result.data} />
     </div>

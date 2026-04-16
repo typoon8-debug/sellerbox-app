@@ -31,9 +31,9 @@ export default async function AdsCapsPage({
   return (
     <div>
       <PageTitleBar
-        title="광고 한도"
-        screenNumber="70004"
-        breadcrumbs={[{ label: "광고 관리" }, { label: "광고 한도" }]}
+        title="광고한도"
+        screenNumber="20005"
+        breadcrumbs={[{ label: "가게관리" }, { label: "광고한도" }]}
       />
       <AdsCapsClient initialData={initialData} />
     </div>

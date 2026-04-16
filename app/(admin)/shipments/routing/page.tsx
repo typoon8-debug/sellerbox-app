@@ -27,9 +27,9 @@ export default async function ShipmentsRoutingPage() {
   return (
     <div>
       <PageTitleBar
-        title="배송 라우팅"
-        screenNumber="41003"
-        breadcrumbs={[{ label: "배송 관리" }, { label: "배송 라우팅" }]}
+        title="배송라우팅"
+        screenNumber="40007"
+        breadcrumbs={[{ label: "주문배송" }, { label: "배송라우팅" }]}
       />
       <RoutingClient initialShipments={shipments} initialSequenceMap={sequenceMap} />
     </div>

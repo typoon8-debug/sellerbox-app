@@ -1,21 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Building2,
-  Users,
-  Code2,
-  Megaphone,
-  Settings,
-  Star,
+  LayoutDashboard,
   Store,
   Package,
-  Warehouse,
-  ShoppingCart,
   Truck,
-  Tag,
-  Ticket,
-  BarChart3,
   Headphones,
-  ScrollText,
+  Settings,
+  Star,
+  BarChart3,
 } from "lucide-react";
 
 export interface MenuNode {
@@ -29,339 +21,241 @@ export interface MenuNode {
 }
 
 export const MENU_TREE: MenuNode[] = [
-  // ─── 즐겨찾기 ──────────────────────────────────────────────────────────────
+  // ─── 메인 (10000) ─────────────────────────────────────────────────────────
   {
-    id: "fav-stores",
-    label: "가게관리",
-    icon: Building2,
-    href: "/stores",
+    id: "main",
+    label: "메인",
+    icon: LayoutDashboard,
+    href: "/shipments/dashboard",
     screenNumber: "10001",
-    section: "favorite",
+    section: "main",
   },
 
-  // ─── 메인 업무 메뉴 ────────────────────────────────────────────────────────
-
-  // 가게 관리 (F012·F013)
+  // ─── 가게관리 (20000) ─────────────────────────────────────────────────────
   {
-    id: "stores",
-    label: "가게 관리",
+    id: "store-mgmt",
+    label: "가게관리",
     icon: Store,
     section: "main",
-    screenNumber: "12000",
+    screenNumber: "20000",
     children: [
       {
-        id: "stores-info",
-        label: "가게정보",
+        id: "store-mgmt-list",
+        label: "가게관리",
         href: "/stores",
-        screenNumber: "12001",
+        screenNumber: "20001",
         section: "main",
       },
       {
-        id: "stores-manage",
-        label: "가게정보 관리",
+        id: "store-mgmt-info",
+        label: "가게정보관리",
         href: "/stores/info",
-        screenNumber: "12002",
+        screenNumber: "20002",
+        section: "main",
+      },
+      {
+        id: "store-mgmt-ad-contents",
+        label: "광고콘텐츠",
+        href: "/ads/contents",
+        screenNumber: "20003",
+        section: "main",
+      },
+      {
+        id: "store-mgmt-ad-schedules",
+        label: "광고일정",
+        href: "/ads/schedules",
+        screenNumber: "20004",
+        section: "main",
+      },
+      {
+        id: "store-mgmt-ad-caps",
+        label: "광고한도",
+        href: "/ads/caps",
+        screenNumber: "20005",
+        section: "main",
+      },
+      {
+        id: "store-mgmt-ad-logs",
+        label: "광고로그",
+        href: "/ads/logs",
+        screenNumber: "20006",
+        section: "main",
+      },
+      {
+        id: "store-mgmt-coupons",
+        label: "쿠폰관리",
+        href: "/coupons",
+        screenNumber: "20007",
+        section: "main",
+      },
+      {
+        id: "store-mgmt-coupon-issuances",
+        label: "쿠폰발급조회",
+        href: "/coupons/issuances",
+        screenNumber: "20008",
         section: "main",
       },
     ],
   },
 
-  // 상품 관리 (F001)
+  // ─── 상품관리 (30000) ─────────────────────────────────────────────────────
   {
-    id: "items",
-    label: "상품 관리",
+    id: "product-mgmt",
+    label: "상품관리",
     icon: Package,
     section: "main",
-    screenNumber: "11000",
+    screenNumber: "30000",
     children: [
       {
-        id: "items-list",
+        id: "product-mgmt-list",
         label: "상품 조회/목록",
         href: "/items",
-        screenNumber: "11001",
+        screenNumber: "30001",
         section: "main",
       },
       {
-        id: "items-detail",
-        label: "상품설명 관리",
+        id: "product-mgmt-detail",
+        label: "상품설명관리",
         href: "/items/detail",
-        screenNumber: "11002",
+        screenNumber: "30002",
         section: "main",
       },
-    ],
-  },
-
-  // 재고 관리 (F002)
-  {
-    id: "inventory",
-    label: "재고 관리",
-    icon: Warehouse,
-    section: "main",
-    screenNumber: "21000",
-    children: [
       {
-        id: "inventory-list",
+        id: "product-mgmt-inventory",
         label: "등록상품 재고관리",
         href: "/inventory",
-        screenNumber: "21001",
+        screenNumber: "30003",
+        section: "main",
+      },
+      {
+        id: "product-mgmt-promotions",
+        label: "프로모션 관리",
+        href: "/promotions",
+        screenNumber: "30004",
+        section: "main",
+      },
+      {
+        id: "product-mgmt-promotion-items",
+        label: "프로모션 상품 관리",
+        href: "/promotions/items",
+        screenNumber: "30005",
         section: "main",
       },
     ],
   },
 
-  // 주문 처리 (F003~F006)
+  // ─── 주문배송 (40000) ─────────────────────────────────────────────────────
   {
-    id: "orders",
-    label: "주문 처리",
-    icon: ShoppingCart,
-    section: "main",
-    screenNumber: "31000",
-    children: [
-      {
-        id: "orders-fulfillment",
-        label: "주문처리",
-        href: "/orders/fulfillment",
-        screenNumber: "31010",
-        section: "main",
-      },
-      {
-        id: "orders-picking",
-        label: "피킹 작업 관리",
-        href: "/orders/picking",
-        screenNumber: "31001",
-        section: "main",
-      },
-      {
-        id: "orders-packing",
-        label: "패킹 작업 관리",
-        href: "/orders/packing",
-        screenNumber: "31002",
-        section: "main",
-      },
-      {
-        id: "orders-labels",
-        label: "라벨 관리",
-        href: "/orders/labels",
-        screenNumber: "31003",
-        section: "main",
-      },
-      {
-        id: "orders-print",
-        label: "피킹/패킹 리스트 출력",
-        href: "/orders/print",
-        screenNumber: "31004",
-        section: "main",
-      },
-    ],
-  },
-
-  // 배송 관리 (F007~F010)
-  {
-    id: "shipments",
-    label: "배송 관리",
+    id: "order-delivery",
+    label: "주문배송",
     icon: Truck,
     section: "main",
-    screenNumber: "41000",
+    screenNumber: "40000",
     children: [
       {
-        id: "shipments-requests",
+        id: "order-delivery-picking",
+        label: "피킹 작업 관리",
+        href: "/orders/picking",
+        screenNumber: "40001",
+        section: "main",
+      },
+      {
+        id: "order-delivery-packing",
+        label: "패킹 작업 관리",
+        href: "/orders/packing",
+        screenNumber: "40002",
+        section: "main",
+      },
+      {
+        id: "order-delivery-labels",
+        label: "라벨 관리",
+        href: "/orders/labels",
+        screenNumber: "40003",
+        section: "main",
+      },
+      {
+        id: "order-delivery-print",
+        label: "피킹/패킹리스트 출력",
+        href: "/orders/print",
+        screenNumber: "40004",
+        section: "main",
+      },
+      {
+        id: "order-delivery-requests",
         label: "배송 요청 관리",
         href: "/shipments/requests",
-        screenNumber: "41001",
+        screenNumber: "40005",
         section: "main",
       },
       {
-        id: "shipments-quick-closing",
+        id: "order-delivery-quick-closing",
         label: "바로퀵 마감",
         href: "/shipments/quick-closing",
-        screenNumber: "41002",
+        screenNumber: "40006",
         section: "main",
       },
       {
-        id: "shipments-routing",
-        label: "배송 라우팅",
+        id: "order-delivery-routing",
+        label: "배송라우팅",
         href: "/shipments/routing",
-        screenNumber: "41003",
-        section: "main",
-      },
-      {
-        id: "shipments-dashboard",
-        label: "배송 현황판",
-        href: "/shipments/dashboard",
-        screenNumber: "41004",
+        screenNumber: "40007",
         section: "main",
       },
     ],
   },
 
-  // 프로모션 (F014·F015)
+  // ─── 고객지원 (50000) ─────────────────────────────────────────────────────
   {
-    id: "promotions",
-    label: "프로모션",
-    icon: Tag,
+    id: "customer-support",
+    label: "고객지원",
+    icon: Headphones,
     section: "main",
     screenNumber: "50000",
     children: [
       {
-        id: "promotions-list",
-        label: "프로모션 관리",
-        href: "/promotions",
+        id: "customer-support-cs",
+        label: "고객 CS",
+        href: "/support/cs",
         screenNumber: "50001",
         section: "main",
       },
       {
-        id: "promotions-items",
-        label: "프로모션 상품 관리",
-        href: "/promotions/items",
+        id: "customer-support-reviews",
+        label: "리뷰관리",
+        href: "/support/reviews",
         screenNumber: "50002",
         section: "main",
       },
     ],
   },
 
-  // 쿠폰 관리 (F016·F017)
+  // ─── 시스템관리 (60000) ───────────────────────────────────────────────────
   {
-    id: "coupons",
-    label: "쿠폰 관리",
-    icon: Ticket,
+    id: "system-mgmt",
+    label: "시스템관리",
+    icon: Settings,
     section: "main",
     screenNumber: "60000",
     children: [
       {
-        id: "coupons-list",
-        label: "쿠폰 관리",
-        href: "/coupons",
+        id: "system-mgmt-users",
+        label: "사용자 조회/목록",
+        href: "/users",
         screenNumber: "60001",
         section: "main",
       },
       {
-        id: "coupons-issuances",
-        label: "쿠폰 발급 조회",
-        href: "/coupons/issuances",
+        id: "system-mgmt-codes",
+        label: "공통코드관리",
+        href: "/codes",
         screenNumber: "60002",
         section: "main",
       },
-    ],
-  },
-
-  // 광고 관리 (F018~F022)
-  {
-    id: "ads",
-    label: "광고 관리",
-    icon: Megaphone,
-    section: "main",
-    screenNumber: "70000",
-    children: [
       {
-        id: "ads-contents",
-        label: "광고 콘텐츠",
-        href: "/ads/contents",
-        screenNumber: "70001",
-        section: "main",
-      },
-      {
-        id: "ads-schedules",
-        label: "광고 일정",
-        href: "/ads/schedules",
-        screenNumber: "70002",
-        section: "main",
-      },
-      {
-        id: "ads-targets",
-        label: "광고 타겟",
-        href: "/ads/targets",
-        screenNumber: "70003",
-        section: "main",
-      },
-      {
-        id: "ads-caps",
-        label: "광고 한도",
-        href: "/ads/caps",
-        screenNumber: "70004",
-        section: "main",
-      },
-      {
-        id: "ads-logs",
-        label: "광고 로그",
-        href: "/ads/logs",
-        screenNumber: "70005",
-        section: "main",
-      },
-    ],
-  },
-
-  // 고객 지원 (F023·F024)
-  {
-    id: "support",
-    label: "고객 지원",
-    icon: Headphones,
-    section: "main",
-    screenNumber: "80000",
-    children: [
-      {
-        id: "support-cs",
-        label: "CS 관리",
-        href: "/support/cs",
-        screenNumber: "80001",
-        section: "main",
-      },
-      {
-        id: "support-reviews",
-        label: "리뷰 관리",
-        href: "/support/reviews",
-        screenNumber: "80002",
-        section: "main",
-      },
-    ],
-  },
-
-  // ─── 플랫폼 관리 ──────────────────────────────────────────────────────────
-  {
-    id: "users",
-    label: "사용자 관리",
-    icon: Users,
-    section: "main",
-    screenNumber: "20000",
-    children: [
-      {
-        id: "users-list",
-        label: "사용자 조회/목록",
-        href: "/users",
-        screenNumber: "20001",
-        section: "main",
-      },
-    ],
-  },
-  {
-    id: "codes",
-    label: "공통코드 관리",
-    icon: Code2,
-    section: "main",
-    screenNumber: "30000",
-    children: [
-      {
-        id: "codes-list",
-        label: "공통코드 관리",
-        href: "/codes",
-        screenNumber: "30001",
-        section: "main",
-      },
-    ],
-  },
-
-  // 시스템 관리 (감사 로그)
-  {
-    id: "system",
-    label: "시스템 관리",
-    icon: ScrollText,
-    section: "main",
-    screenNumber: "90000",
-    children: [
-      {
-        id: "audit",
-        label: "감사 로그",
+        id: "system-mgmt-audit",
+        label: "감사로그",
         href: "/audit",
-        screenNumber: "90010",
+        screenNumber: "60003",
         section: "main",
       },
     ],
@@ -369,21 +263,10 @@ export const MENU_TREE: MenuNode[] = [
 
   // ─── 링크 메뉴 ─────────────────────────────────────────────────────────────
   {
-    id: "settings",
-    label: "설정",
-    icon: Settings,
-    href: "/settings",
-    screenNumber: "90001",
-    section: "link",
-  },
-
-  // 통계 (확장용)
-  {
     id: "analytics",
     label: "통계",
     icon: BarChart3,
     href: "/analytics",
-    screenNumber: "90002",
     section: "link",
   },
 ];

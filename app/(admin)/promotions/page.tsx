@@ -32,8 +32,8 @@ export default async function PromotionsPage({
     <div>
       <PageTitleBar
         title="프로모션 관리"
-        screenNumber="50001"
-        breadcrumbs={[{ label: "프로모션" }, { label: "프로모션 관리" }]}
+        screenNumber="30004"
+        breadcrumbs={[{ label: "상품관리" }, { label: "프로모션 관리" }]}
       />
       <PromotionsClient initialData={result.data} />
     </div>

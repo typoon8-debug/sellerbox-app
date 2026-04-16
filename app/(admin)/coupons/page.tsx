@@ -15,9 +15,9 @@ export default async function CouponsPage() {
   return (
     <div>
       <PageTitleBar
-        title="쿠폰 관리"
-        screenNumber="60001"
-        breadcrumbs={[{ label: "쿠폰 관리" }, { label: "쿠폰 관리" }]}
+        title="쿠폰관리"
+        screenNumber="20007"
+        breadcrumbs={[{ label: "가게관리" }, { label: "쿠폰관리" }]}
       />
       <CouponsClient initialData={result.data} />
     </div>

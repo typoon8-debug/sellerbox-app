@@ -16,8 +16,8 @@ export default async function ShipmentsRequestsPage() {
     <div>
       <PageTitleBar
         title="배송 요청 관리"
-        screenNumber="41001"
-        breadcrumbs={[{ label: "배송 관리" }, { label: "배송 요청 관리" }]}
+        screenNumber="40005"
+        breadcrumbs={[{ label: "주문배송" }, { label: "배송 요청 관리" }]}
       />
       <RequestsClient initialData={result.data} />
     </div>

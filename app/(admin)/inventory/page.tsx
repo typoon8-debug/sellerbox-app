@@ -38,8 +38,8 @@ export default async function InventoryPage() {
     <div className="flex h-full flex-col">
       <PageTitleBar
         title="등록상품 재고관리"
-        screenNumber="21001"
-        breadcrumbs={[{ label: "재고 관리" }, { label: "등록상품 재고관리" }]}
+        screenNumber="30003"
+        breadcrumbs={[{ label: "상품관리" }, { label: "등록상품 재고관리" }]}
       />
       <InventoryMgmtClient stores={stores} />
     </div>

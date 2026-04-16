@@ -44,9 +44,9 @@ export default async function OrdersPrintPage() {
     <div>
       <div className="print:hidden">
         <PageTitleBar
-          title="피킹리스트 출력"
-          screenNumber="34001"
-          breadcrumbs={[{ label: "주문 처리" }, { label: "피킹리스트 출력" }]}
+          title="피킹/패킹리스트 출력"
+          screenNumber="40004"
+          breadcrumbs={[{ label: "주문배송" }, { label: "피킹/패킹리스트 출력" }]}
         />
       </div>
       <div className="p-6">

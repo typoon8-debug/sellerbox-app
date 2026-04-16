@@ -34,9 +34,9 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   return (
     <div>
       <PageTitleBar
-        title="감사 로그"
-        screenNumber="90010"
-        breadcrumbs={[{ label: "시스템" }, { label: "감사 로그" }]}
+        title="감사로그"
+        screenNumber="60003"
+        breadcrumbs={[{ label: "시스템관리" }, { label: "감사로그" }]}
       />
       <AuditClient initialData={initialData} initialSearch={params.q ?? ""} />
     </div>

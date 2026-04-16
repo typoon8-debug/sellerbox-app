@@ -63,9 +63,9 @@ export default async function SupportReviewsPage({
   return (
     <div>
       <PageTitleBar
-        title="리뷰 관리"
-        screenNumber="80002"
-        breadcrumbs={[{ label: "고객 지원" }, { label: "리뷰 관리" }]}
+        title="리뷰관리"
+        screenNumber="50002"
+        breadcrumbs={[{ label: "고객지원" }, { label: "리뷰관리" }]}
       />
       <ReviewsClient initialData={initialData} initialStatus={params.status ?? "ALL"} />
     </div>

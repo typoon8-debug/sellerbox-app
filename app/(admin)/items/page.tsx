@@ -60,9 +60,9 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
   return (
     <div>
       <PageTitleBar
-        title="상품 관리"
-        screenNumber="11001"
-        breadcrumbs={[{ label: "상품 관리" }, { label: "상품 조회/목록" }]}
+        title="상품 조회/목록"
+        screenNumber="30001"
+        breadcrumbs={[{ label: "상품관리" }, { label: "상품 조회/목록" }]}
       />
       <ItemsClient initialData={initialData} stores={stores} initialStoreId={selectedStoreId} />
     </div>

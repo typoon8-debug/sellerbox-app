@@ -31,9 +31,9 @@ export default async function AdsSchedulesPage({
   return (
     <div>
       <PageTitleBar
-        title="광고 일정"
-        screenNumber="70002"
-        breadcrumbs={[{ label: "광고 관리" }, { label: "광고 일정" }]}
+        title="광고일정"
+        screenNumber="20004"
+        breadcrumbs={[{ label: "가게관리" }, { label: "광고일정" }]}
       />
       <AdsSchedulesClient initialData={initialData} />
     </div>

@@ -16,8 +16,8 @@ export default async function ShipmentsQuickClosingPage() {
     <div>
       <PageTitleBar
         title="바로퀵 마감"
-        screenNumber="41002"
-        breadcrumbs={[{ label: "배송 관리" }, { label: "바로퀵 마감" }]}
+        screenNumber="40006"
+        breadcrumbs={[{ label: "주문배송" }, { label: "바로퀵 마감" }]}
       />
       <QuickClosingClient initialSlots={result.data} />
     </div>

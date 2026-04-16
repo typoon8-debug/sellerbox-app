@@ -8,9 +8,9 @@ export default function StoresInfoManagePage() {
   return (
     <div>
       <PageTitleBar
-        title="가게정보 관리"
-        screenNumber="12002"
-        breadcrumbs={[{ label: "가게 관리" }, { label: "가게정보 관리" }]}
+        title="가게정보관리"
+        screenNumber="20002"
+        breadcrumbs={[{ label: "가게관리" }, { label: "가게정보관리" }]}
       />
       <StoreInfoClient
         fulfillments={[]}

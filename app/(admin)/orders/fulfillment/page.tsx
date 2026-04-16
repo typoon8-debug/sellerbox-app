@@ -53,8 +53,8 @@ export default async function OrderFulfillmentPage() {
     <div className="flex h-full flex-col">
       <PageTitleBar
         title="주문처리 (피킹/패킹/라벨/배송)"
-        screenNumber="31010"
-        breadcrumbs={[{ label: "주문 처리" }, { label: "주문처리" }]}
+        screenNumber="40000"
+        breadcrumbs={[{ label: "주문배송" }, { label: "주문처리" }]}
       />
       <FulfillmentClient stores={stores} initialStats={initialStats} today={today} />
     </div>
