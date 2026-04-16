@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Columns2, SquareIcon } from "lucide-react";
+import { Rows2, SquareIcon } from "lucide-react";
 import { useMdiStore } from "@/lib/stores/mdi-store";
 import { toast } from "sonner";
 
@@ -30,7 +30,7 @@ export function ScreenSplitToggle() {
           className="h-8 w-8 shrink-0"
           onClick={handleClick}
         >
-          {splitActive ? <Columns2 className="h-4 w-4" /> : <SquareIcon className="h-4 w-4" />}
+          {splitActive ? <Rows2 className="h-4 w-4" /> : <SquareIcon className="h-4 w-4" />}
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom">

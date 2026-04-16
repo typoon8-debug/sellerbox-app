@@ -23,11 +23,11 @@ export function MdiContentArea({ children }: MdiContentAreaProps) {
       : `${secondaryTab.href}?embed=1`;
 
     return (
-      <div className="divide-separator flex h-full min-h-0 flex-1 divide-x overflow-hidden">
-        {/* 좌측 — 현재 활성 라우트 */}
-        <div className="bg-background min-w-0 flex-1 overflow-auto">{children}</div>
-        {/* 우측 — secondary 탭을 iframe(embed 모드) 으로 렌더 */}
-        <div className="bg-background min-w-0 flex-1 overflow-hidden">
+      <div className="divide-separator flex h-full min-h-0 flex-1 flex-col divide-y overflow-hidden">
+        {/* 상단 — 현재 활성 라우트 */}
+        <div className="bg-background min-h-0 min-w-0 flex-1 overflow-auto">{children}</div>
+        {/* 하단 — secondary 탭을 iframe(embed 모드) 으로 렌더 */}
+        <div className="bg-background min-h-0 min-w-0 flex-1 overflow-hidden">
           <iframe
             key={embedHref}
             src={embedHref}
