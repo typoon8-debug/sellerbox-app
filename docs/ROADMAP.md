@@ -433,6 +433,35 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `npm run check-all` (TypeScript + ESLint + Prettier) 전체 통과
   - `npm run build` 성공 (23개 라우트, `/stores` 포함)
 
+- ✅ **Task 026: 상품조회 검색조건 추가 및 상품설명 관리 신규 화면 (F001·F001-2)** - 완료
+
+  #### 요구사항
+  - **상품 조회/목록 (11001)**: 가게명·카테고리 검색조건 영역 추가, 로그인 사용자 소속 가게 선택 지원
+  - **상품설명 관리 (11002) 신규**: item_detail 테이블 CRUD 화면 — 검색조건 + 상품그리드 + 상세폼 3단 구조
+  - **업무규칙**: OWNER는 하나 이상의 가게를 운영할 수 있음
+
+  #### Phase A: 공통 인프라
+  - `lib/repositories/seller.repository.ts`: `findByEmail(email)` 메서드 추가 (OWNER 복수 가게 지원 — 동일 email 복수 seller 레코드 허용)
+  - `lib/repositories/item-detail.repository.ts`: `findByItemId()`, `softDelete()`, `applySearch()` 추가
+  - `lib/schemas/domain/item-detail.schema.ts` 신규: create/update/delete Zod 스키마
+  - `lib/actions/domain/item-detail.actions.ts` 신규: createItemDetail, updateItemDetail, softDeleteItemDetail, fetchItemDetailByItem, fetchItemsByStore 서버 액션
+  - `app/(admin)/layout.tsx`: `.maybeSingle()` → `.limit(1).maybeSingle()` (복수 seller 레코드 에러 방지)
+
+  #### Phase B: 상품 조회/목록 검색조건 추가
+  - `app/(admin)/items/page.tsx`: 세션 기반 seller 가게 목록 조회, store_id URL 파라미터 지원, item 조회 시 store_id 필터 적용
+  - `app/(admin)/items/items-client.tsx`: QueryField + QueryActions 패턴의 검색조건 패널 추가 (가게명 Select + 카테고리 Select + 조회/초기화 버튼)
+
+  #### Phase C: 상품설명 관리 신규 화면
+  - `lib/navigation/menu-items.ts`: "상품설명 관리" 메뉴 (id: items-detail, screenNumber: 11002) 등록
+  - `app/(admin)/items/detail/page.tsx` 신규: 서버 컴포넌트 (세션 기반 가게 조회)
+  - `app/(admin)/items/detail/item-detail-client.tsx` 신규: 검색조건 + 상품 그리드(DataTable) + item_detail 폼 (5종 이미지 ImageUploader 포함) 3단 구조
+  - `app/(admin)/items/detail/loading.tsx` 신규: 로딩 스켈레톤
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run lint` 에러 없음
+  - `npm run build` 성공 (`/items`, `/items/detail` 신규 라우트 포함)
+
 ---
 
 ## 품질 체크리스트
