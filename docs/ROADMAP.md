@@ -662,6 +662,105 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `npm run lint` 에러 없음
   - `npm run build` 성공
 
+- ✅ **Task 032: 광고 관리 통합 화면 재구성 (F018·F019·F020·F021·F022)** - 완료
+
+  #### 요구사항
+  - 광고콘텐츠(F018)·광고일정(F019)·광고타겟(F020)·광고한도(F021)·광고로그(F022) 5개 분리 화면을 `/ads/contents` 단일 통합 화면으로 재구성
+  - DB 테이블명 `fp_ad_*` → `ad_*` 정리 및 `placement_id` 값 CHECK 제약(HERO/MID_1/MID_2/FOOTER) 추가
+  - 세션 기반 가게 스코프: 로그인 OWNER 소속 가게만 조회/저장
+
+  #### Phase A: DB 마이그레이션
+  - `supabase/migrations/20260418000001_ads_rename_and_enum.sql` 신규: `fp_ad_content` → `ad_content` 등 5개 테이블 rename + `placement_id` CHECK 제약 추가 + RLS 재바인딩
+  - `lib/supabase/database.types.ts`: 5개 테이블 타입 key 이름 변경 (`fp_ad_*` → `ad_*`), `placement_id` 리터럴 유니언 추가
+  - `lib/types/domain/advertisement.ts`: Row/Insert/Update export 키 이름 정리
+
+  #### Phase B: 메뉴 구조 / 라우팅
+  - `lib/navigation/menu-items.ts`: 광고일정(20004)·광고한도(20005)·광고로그(20006) 메뉴 항목 제거 → 광고콘텐츠(20003) 단일 통합 메뉴 유지
+  - 레거시 디렉터리 삭제: `app/(admin)/ads/schedules/`, `ads/targets/`, `ads/caps/`, `ads/logs/`
+
+  #### Phase C: 리포지토리 / 스키마 / 서버 액션 보강
+  - `lib/repositories/ad-content.repository.ts`: `findByStoreId()`, `softDelete()` 추가
+  - `lib/repositories/ad-{schedule,target,cap,log}.repository.ts`: `findByContentId()` 추가
+  - `lib/schemas/domain/ad.schema.ts`: update/softDelete/fetch 스키마 추가, `adPlacementEnum` 추가
+  - `lib/actions/domain/ad.actions.ts`: `fetchAdContentsByStore`, `fetchAdContentTabs`, update/softDelete 액션 추가
+
+  #### Phase D: 통합 화면 재구성
+  - `app/(admin)/ads/contents/page.tsx` 재작성: 세션 기반 가게 스코프 Server Component
+  - `app/(admin)/ads/contents/ads-contents-client.tsx` 재작성: 검색조건 + Panel 1(콘텐츠 목록·CRUD) + Panel 2(3탭: 일정·타겟·로그) 통합 오케스트레이터
+  - `app/(admin)/ads/contents/_components/content-register-dialog.tsx` 신규: 등록/수정 공용 LayerDialog (placement_id Select 포함)
+  - `app/(admin)/ads/contents/_components/ad-content-tabs.tsx` 신규: shadcn Tabs 오케스트레이터
+  - `app/(admin)/ads/contents/_components/tabs/schedule-tab.tsx` 신규: ad_schedule CRUD DataTable
+  - `app/(admin)/ads/contents/_components/tabs/target-tab.tsx` 신규: 타겟+한도 통합 DataTable
+  - `app/(admin)/ads/contents/_components/tabs/log-tab.tsx` 신규: 읽기 전용 로그 DataTable
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run lint` 에러 없음
+  - `npm run build` 성공 (4개 광고 레거시 라우트 제거, 통합 라우트 정상)
+
+- ✅ **Task 033: 쿠폰 관리 통합 화면 재구성 (F016·F017)** - 완료
+
+  #### 요구사항
+  - 쿠폰관리(F016)·쿠폰발급조회(F017) 2개 분리 화면을 `/coupons` 단일 통합 화면으로 재구성
+  - Panel 1(쿠폰 목록·CRUD) + Panel 2(쿠폰발급 탭·쿠폰사용 탭) 마스터-디테일+탭 구조
+  - 세션 기반 가게 스코프: 로그인 OWNER 소속 가게만 조회/저장
+  - 소프트 삭제: `status = 'CANCELLED'`
+
+  #### Phase A: 리포지토리 보강
+  - `lib/repositories/coupon.repository.ts`: `findByStoreId()` (CANCELLED 제외), `softDelete()` 추가
+  - `lib/repositories/coupon-issuance.repository.ts`: `findByCouponId()`, `cancelIssuance()` 추가
+  - `lib/repositories/coupon-redemption.repository.ts`: `findByCouponId()` 추가 — `coupon_issurance` 경유 2-step 쿼리 (redemption에 coupon_id 직접 컬럼 없음)
+
+  #### Phase B: 스키마 / 서버 액션 보강
+  - `lib/schemas/domain/coupon.schema.ts`: `updateCouponSchema`, `softDeleteCouponSchema`, `fetchCouponsByStoreSchema`, `fetchCouponTabsSchema`, `cancelIssuanceSchema` 추가 (`z.string().min(1)` — Zod v4 호환)
+  - `lib/actions/domain/coupon.actions.ts`: `fetchCouponsByStore`, `updateCoupon`, `softDeleteCoupon`, `fetchCouponTabs` (issuances + redemptions Promise.all), `cancelIssuance` 추가
+
+  #### Phase C: 메뉴 구조
+  - `lib/navigation/menu-items.ts`: 쿠폰발급조회(20008) 메뉴 항목 제거 → 쿠폰관리(20007) 단일 통합 메뉴 유지
+  - `app/(admin)/coupons/issuances/` 디렉터리 삭제 (레거시)
+
+  #### Phase D: 통합 화면 구현
+  - `app/(admin)/coupons/page.tsx` 재작성: 세션 기반 가게 스코프 Server Component
+  - `app/(admin)/coupons/loading.tsx` 신규: 3-패널 스켈레톤
+  - `app/(admin)/coupons/coupons-client.tsx` 재작성: 검색조건 + Panel 1(쿠폰 목록·CRUD) + Panel 2(탭) 통합 오케스트레이터
+  - `app/(admin)/coupons/_components/coupon-register-dialog.tsx` 신규: 등록/수정 공용 LayerDialog (유형·할인·유효기간·한도 필드)
+  - `app/(admin)/coupons/_components/coupon-tabs.tsx` 신규: `CouponTabData` 인터페이스 + shadcn Tabs (쿠폰발급·쿠폰사용)
+  - `app/(admin)/coupons/_components/tabs/issuance-tab.tsx` 신규: 발급 CRUD DataTable (발급/취소 기능)
+  - `app/(admin)/coupons/_components/tabs/redemption-tab.tsx` 신규: 읽기 전용 사용 이력 DataTable
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run lint` 에러 없음
+  - `npm run build` 성공 (쿠폰발급조회 레거시 라우트 제거, 통합 라우트 정상)
+
+- ✅ **Task 035: 주문처리 액션 바 개선 + 주문배송 메뉴 정리** - 완료
+
+  #### 요구사항
+  1. **주문처리 화면 개선**: [라벨출력] 버튼 오른쪽에 [피킹/패킹리스트 출력] 버튼 추가. 라벨출력은 주문건별 주문내역+결제내역+배송주소를 보여주는 다이얼로그로 재정의.
+  2. **메뉴 정리**: 피킹 작업 관리(40001), 라벨 관리(40003), 피킹/패킹리스트 출력(40004) 3개 메뉴 삭제.
+
+  #### Phase A: 라벨출력 데이터 확장
+  - `lib/schemas/domain/order-fulfillment.schema.ts`: `fetchLabelPrintDataSchema` 추가
+  - `lib/actions/domain/order-fulfillment.actions.ts`: `LabelPrintData` 타입 + `fetchLabelPrintData` 액션 추가 (order + order_item + item + users + address 조인)
+
+  #### Phase B: LabelPrintDialog 신규
+  - `app/(admin)/orders/fulfillment/components/label-print-dialog.tsx` 신규: 주문건별 주문내역+결제내역+배송주소 출력 다이얼로그 (인쇄 시 주문당 1페이지)
+
+  #### Phase C: ProcessingPanel 버튼 추가
+  - `app/(admin)/orders/fulfillment/panels/processing-panel.tsx`: `onPrintList` prop 추가 + [피킹/패킹리스트 출력] 버튼 삽입
+
+  #### Phase D: FulfillmentClient 재배선
+  - `app/(admin)/orders/fulfillment/fulfillment-client.tsx`: 하단 별도 버튼 바 제거, `LabelPrintDialog` 연결, `handleLabelPrint`가 `batchGenerateLabels` 후 `setLabelDialogOpen(true)` 호출
+
+  #### Phase E: 메뉴 정리 + 레거시 스텁
+  - `lib/navigation/menu-items.ts`: 40001·40003·40004 메뉴 항목 제거
+  - `app/(admin)/orders/picking/page.tsx`, `labels/page.tsx`, `print/page.tsx`: redirect 스텁 (`/orders/fulfillment`)
+  - 삭제: `picking-client.tsx`, `labels-client.tsx`, `print-button.tsx`
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run build` 성공 (`/orders/fulfillment` 33.7kB, redirect 스텁 3개 183B)
+
 ---
 
 ## 품질 체크리스트

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
 import { PriceDisplay } from "@/components/admin/domain/price-display";
-import { ShoppingBag, Package, Printer } from "lucide-react";
+import { ShoppingBag, Package, Printer, FileText } from "lucide-react";
 import type { OrderWithCustomer } from "@/lib/actions/domain/order-fulfillment.actions";
 import type { OrderStatus, DeliveryMethod } from "@/lib/types/domain/enums";
 
@@ -14,6 +14,7 @@ interface ProcessingPanelProps {
   onPicking: () => void;
   onPacking: () => void;
   onLabelPrint: () => void;
+  onPrintList: () => void;
 }
 
 /** Panel 3: 주문처리 결과 + 액션 버튼 */
@@ -24,6 +25,7 @@ export function ProcessingPanel({
   onPicking,
   onPacking,
   onLabelPrint,
+  onPrintList,
 }: ProcessingPanelProps) {
   const columns: DataTableColumn<OrderWithCustomer>[] = [
     {
@@ -107,6 +109,16 @@ export function ProcessingPanel({
         >
           <Printer className="h-3.5 w-3.5" />
           라벨출력
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5"
+          disabled={loading || selectedOrderCount === 0}
+          onClick={onPrintList}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          피킹/패킹리스트 출력
         </Button>
       </div>
 

@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { QueryField } from "@/components/admin/query-field";
 import { QueryActions } from "@/components/admin/query-actions";
 import { DateRangePicker } from "@/components/admin/domain/date-range-picker";
@@ -17,6 +16,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DashboardCards } from "@/app/(admin)/orders/fulfillment/components/dashboard-cards";
 import { AlertBanner } from "@/app/(admin)/orders/fulfillment/components/alert-banner";
 import { PrintListDialog } from "@/app/(admin)/orders/fulfillment/components/print-list-dialog";
+import { LabelPrintDialog } from "@/app/(admin)/orders/fulfillment/components/label-print-dialog";
 import { OrderListPanel } from "@/app/(admin)/orders/fulfillment/panels/order-list-panel";
 import { OrderDetailPanel } from "@/app/(admin)/orders/fulfillment/panels/order-detail-panel";
 import { ProcessingPanel } from "@/app/(admin)/orders/fulfillment/panels/processing-panel";
@@ -40,7 +40,6 @@ import type {
 } from "@/lib/actions/domain/order-fulfillment.actions";
 import type { DashboardStats } from "@/lib/repositories/order.repository";
 import type { OrderStatus } from "@/lib/types/domain/enums";
-import { FileText } from "lucide-react";
 
 interface FulfillmentClientProps {
   stores: { store_id: string; name: string }[];
@@ -95,6 +94,7 @@ export function FulfillmentClient({ stores, initialStats, today }: FulfillmentCl
 
   // ─── 출력 다이얼로그 ──────────────────────────────────────────────────────────
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [labelDialogOpen, setLabelDialogOpen] = useState(false);
 
   // ─── 데이터 조회 ─────────────────────────────────────────────────────────────
   const doSearch = useCallback(async () => {
@@ -284,7 +284,7 @@ export function FulfillmentClient({ stores, initialStats, today }: FulfillmentCl
           const { successCount = 0, failedIds } = result.data;
           if (successCount > 0) {
             toast.success(`${successCount}건 라벨이 생성되었습니다.`);
-            window.print();
+            setLabelDialogOpen(true);
           }
           if (failedIds.length > 0) {
             toast.warning(`${failedIds.length}건 라벨 생성에 실패했습니다.`);
@@ -434,6 +434,7 @@ export function FulfillmentClient({ stores, initialStats, today }: FulfillmentCl
             onPicking={handlePicking}
             onPacking={handlePacking}
             onLabelPrint={handleLabelPrint}
+            onPrintList={() => setPrintDialogOpen(true)}
           />
         </div>
         <div className="flex min-h-0 w-1/2 flex-col overflow-hidden">
@@ -444,20 +445,6 @@ export function FulfillmentClient({ stores, initialStats, today }: FulfillmentCl
             onDispatch={handleDispatch}
           />
         </div>
-      </div>
-
-      {/* ─── 하단 버튼 바: 주문처리 리스트 출력 ─────────────────────────────────── */}
-      <div className="flex flex-shrink-0 items-center justify-end border-t px-4 py-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5"
-          onClick={() => setPrintDialogOpen(true)}
-          disabled={selectedOrderIds.size === 0}
-        >
-          <FileText className="h-4 w-4" />
-          주문처리 리스트 출력
-        </Button>
       </div>
 
       {/* ─── 주문 상태 변경 확인 다이얼로그 ─────────────────────────────────────── */}
@@ -478,6 +465,13 @@ export function FulfillmentClient({ stores, initialStats, today }: FulfillmentCl
       <PrintListDialog
         open={printDialogOpen}
         onOpenChange={setPrintDialogOpen}
+        selectedOrderIds={selectedOrderIds}
+      />
+
+      {/* ─── 라벨 출력 다이얼로그 ────────────────────────────────────────────────── */}
+      <LabelPrintDialog
+        open={labelDialogOpen}
+        onOpenChange={setLabelDialogOpen}
         selectedOrderIds={selectedOrderIds}
       />
     </div>

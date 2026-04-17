@@ -19,6 +19,7 @@ import {
   updateOrderStatusSchema,
   fetchDispatchRequestsByStoreSchema,
   fetchPrintDataSchema,
+  fetchLabelPrintDataSchema,
 } from "@/lib/schemas/domain/order-fulfillment.schema";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -551,3 +552,131 @@ export const fetchPrintData = withAction(fetchPrintDataSchema, async ({ order_id
 
   return { categorySummary, orderItems };
 });
+
+// ---------------------------------------------------------------------------
+// 11. 라벨 출력 데이터 조회 (주문내역 + 결제내역 + 배송주소)
+// ---------------------------------------------------------------------------
+
+/** 주문건별 라벨 출력 데이터 타입 */
+export type LabelPrintData = {
+  order_id: string;
+  order_no: string;
+  ordered_at: string | null;
+  customer_name: string;
+  items: { item_name: string; qty: number; unit_price: number }[];
+  payment: {
+    subtotal: number;
+    delivery_fee: number;
+    final_payable: number;
+  };
+  shipping: {
+    recipient_name: string;
+    address: string;
+    phone: string | null;
+    delivery_method: string | null;
+    requests: string | null;
+  };
+};
+
+export const fetchLabelPrintData = withAction(
+  fetchLabelPrintDataSchema,
+  async ({ order_ids }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = createAdminClient() as any;
+    const orderRepo = new OrderRepository(supabase);
+    const orderItemRepo = new OrderItemRepository(supabase);
+
+    const orders = await Promise.all(order_ids.map((id) => orderRepo.findById(id)));
+    const validOrders = orders.filter(Boolean) as OrderRow[];
+
+    if (validOrders.length === 0) return [] as LabelPrintData[];
+
+    // users 조회 (수취인 이름, 전화)
+    const customerIds = [
+      ...new Set(validOrders.map((o) => o.customer_id).filter(Boolean)),
+    ] as string[];
+    const { data: usersData } = await supabase
+      .from("users")
+      .select("user_id, name, phone")
+      .in("user_id", customerIds);
+
+    const userMap = new Map<string, { name: string; phone: string | null }>(
+      ((usersData ?? []) as { user_id: string; name: string; phone?: string | null }[]).map((u) => [
+        u.user_id,
+        { name: u.name, phone: u.phone ?? null },
+      ])
+    );
+
+    // address 조회 (배송지 상세)
+    const addressIds = [
+      ...new Set(validOrders.map((o) => o.address_id).filter(Boolean)),
+    ] as string[];
+    const addressMap = new Map<string, string>();
+    if (addressIds.length > 0) {
+      const { data: addrData } = await supabase
+        .from("address")
+        .select("address_id, full_address, address1, address2, zip_code")
+        .in("address_id", addressIds);
+      for (const addr of (addrData ?? []) as Record<string, string | null>[]) {
+        const id = addr["address_id"] as string;
+        const full =
+          (addr["full_address"] as string | null) ??
+          [addr["zip_code"], addr["address1"], addr["address2"]].filter(Boolean).join(" ") ??
+          "";
+        addressMap.set(id, full);
+      }
+    }
+
+    // item 정보 조회
+    const allOrderItems = await Promise.all(
+      validOrders.map(async (order) => ({
+        order,
+        items: await orderItemRepo.findByOrderId(order.order_id),
+      }))
+    );
+
+    const allItemIds = [
+      ...new Set(allOrderItems.flatMap(({ items }) => items.map((i) => i.item_id).filter(Boolean))),
+    ] as string[];
+    const { data: itemsData } = await supabase
+      .from("item")
+      .select("item_id, name")
+      .in("item_id", allItemIds);
+    const itemNameMap = new Map<string, string>(
+      ((itemsData ?? []) as { item_id: string; name: string }[]).map((i) => [i.item_id, i.name])
+    );
+
+    return allOrderItems.map(({ order, items }): LabelPrintData => {
+      const user = order.customer_id ? userMap.get(order.customer_id) : undefined;
+      const address = order.address_id ? (addressMap.get(order.address_id) ?? "") : "";
+
+      const labelItems = items.map((i) => ({
+        item_name: i.item_id ? (itemNameMap.get(i.item_id) ?? "-") : "-",
+        qty: i.qty,
+        unit_price: Number(i.unit_price ?? 0),
+      }));
+      const subtotal = labelItems.reduce((s, i) => s + i.qty * i.unit_price, 0);
+
+      return {
+        order_id: order.order_id,
+        order_no: order.order_no ?? order.order_id,
+        ordered_at: order.ordered_at ?? null,
+        customer_name: user?.name ?? "-",
+        items: labelItems,
+        payment: {
+          subtotal,
+          delivery_fee: Number(order.delivery_fee ?? 0),
+          final_payable: Number(order.final_payable ?? 0),
+        },
+        shipping: {
+          recipient_name: user?.name ?? "-",
+          address,
+          phone: user?.phone ?? null,
+          delivery_method: order.delivery_method ?? null,
+          requests: order.requests ?? null,
+        },
+      };
+    });
+  },
+  { action: "READ", resource: "LABEL" }
+);

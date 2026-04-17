@@ -70,6 +70,11 @@ export const fetchPrintDataSchema = z.object({
   order_ids: z.array(z.string().min(1)).min(1, "출력할 주문을 선택해 주세요."),
 });
 
+/** 라벨 출력 데이터 조회 스키마 */
+export const fetchLabelPrintDataSchema = z.object({
+  order_ids: z.array(z.string().min(1)).min(1, "출력할 주문을 선택해 주세요."),
+});
+
 export type FetchOrdersForFulfillmentInput = z.infer<typeof fetchOrdersForFulfillmentSchema>;
 export type FetchOrderItemsWithInventoryInput = z.infer<typeof fetchOrderItemsWithInventorySchema>;
 export type FetchDashboardStatsInput = z.infer<typeof fetchDashboardStatsSchema>;
@@ -80,3 +85,4 @@ export type BatchCreateDispatchRequestsInput = z.infer<typeof batchCreateDispatc
 export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;
 export type FetchDispatchRequestsByStoreInput = z.infer<typeof fetchDispatchRequestsByStoreSchema>;
 export type FetchPrintDataInput = z.infer<typeof fetchPrintDataSchema>;
+export type FetchLabelPrintDataInput = z.infer<typeof fetchLabelPrintDataSchema>;
