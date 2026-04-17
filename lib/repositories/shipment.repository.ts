@@ -16,6 +16,7 @@ export interface ShipmentWithOrder extends ShipmentRow {
 
 export interface BbqAddressGroup {
   address_id: string;
+  address_text: string | null;
   orders: {
     shipment_id: string;
     order_id: string;
@@ -102,7 +103,7 @@ export class ShipmentRepository extends BaseRepository<"shipment"> {
     for (const row of bbqRows as any[]) {
       const addressId: string = row.order?.address_id ?? "UNKNOWN";
       if (!groupMap.has(addressId)) {
-        groupMap.set(addressId, { address_id: addressId, orders: [] });
+        groupMap.set(addressId, { address_id: addressId, address_text: null, orders: [] });
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,6 +120,28 @@ export class ShipmentRepository extends BaseRepository<"shipment"> {
         quick_depart_time: row.depart_time ?? null,
         items,
       });
+    }
+
+    // address 테이블에서 실제 주소 텍스트 조회 (address 테이블 미생성 시 무시)
+    const addressIds = [...groupMap.keys()].filter((id) => id !== "UNKNOWN");
+    if (addressIds.length > 0) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: addressRows } = await (this.client as any)
+          .from("address")
+          .select("address_id, address")
+          .in("address_id", addressIds);
+
+        const addrMap = new Map<string, string>(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (addressRows ?? []).map((a: any) => [a.address_id, a.address])
+        );
+        for (const [id, group] of groupMap.entries()) {
+          group.address_text = addrMap.get(id) ?? null;
+        }
+      } catch {
+        // address 테이블 미생성 시 무시
+      }
     }
 
     return Array.from(groupMap.values());

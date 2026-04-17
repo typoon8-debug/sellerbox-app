@@ -848,6 +848,28 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `npm run build` 성공
   - Playwright: 배송관리·고객지원·리뷰관리 정상 로딩, MDI 레이아웃 확인
 
+- ✅ **Task 039: 배송관리 UX 개선 — 패킹 메뉴 삭제 + BBQ 배송목록 출력** - 완료
+
+  #### 패킹 작업관리 메뉴 항목 삭제
+  - **변경**: `lib/navigation/menu-items.ts` 주문배송(40000) 그룹에서 "패킹 작업 관리" leaf 제거
+  - **이유**: 주문처리 통합 화면(40000)에 패킹 기능이 통합되어 있어 별도 메뉴 불필요
+
+  #### BBQ 배송목록 출력 기능 (F008 보완)
+  - **버튼 위치**: 배송관리 화면 Panel 1 헤더 — [배송출발] 오른쪽
+  - **출력 항목**: 주소 · 주문ID · 상품명 · 수량 · 주문일시 · 배송예정시간 (method=BBQ 필터)
+  - **주소 조회**: `shipment.order_id → order.address_id → address.address` 체인 조회 (address 테이블 미존재 시 order.address_id 값 fallback)
+  - **인쇄**: Dialog 내 [인쇄] 버튼 → `window.print()`
+
+  #### 수정/신규 파일
+  - `lib/navigation/menu-items.ts`: "패킹 작업 관리" leaf 삭제
+  - `lib/repositories/shipment.repository.ts`: `BbqAddressGroup.address_text` 필드 추가, address 테이블 조회 로직 추가
+  - `app/(admin)/shipments/requests/_components/shipment-print-dialog.tsx`: 신규 — BBQ 배송목록 출력 다이얼로그
+  - `app/(admin)/shipments/requests/_components/shipment-list-panel.tsx`: 인쇄 버튼 + 다이얼로그 연결
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run build` 성공
+
 ---
 
 ## 품질 체크리스트

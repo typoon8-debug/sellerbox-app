@@ -166,6 +166,7 @@ export function DeliveryClient({
           onSelectionChange={setSelectedIds}
           onStartDelivery={handleStartDelivery}
           onCompleteDelivery={handleCompleteDelivery}
+          bbqGroups={bbqGroups}
           loading={isPending}
         />
       </div>

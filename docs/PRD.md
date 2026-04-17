@@ -129,7 +129,6 @@
 
 🚚 주문배송 (40000)
 ├── 주문처리 — F003~F007 통합 (화면번호: 40000)
-├── 패킹 작업 관리 — F004 (화면번호: 40002)
 └── 배송관리 — F007+F008 통합 (화면번호: 40005)
     ├── [검색조건] 가게명 Select + 주문일자 from/to + 조회/초기화
     ├── [Panel 1] 전체 배송 목록 (체크박스 다중선택 + 배송출발·배송완료 버튼)
@@ -390,7 +389,7 @@
 | **진입 경로** | 메뉴 → 주문배송 → 배송관리 클릭 |
 | **사용자 행동** | 가게·주문일자 조회 → Panel 1 배송목록에서 선택 → [배송출발] 또는 [배송완료] 처리, Panel 2에서 BBQ 배송지별 묶음 확인 |
 | **화면 구조** | **[검색조건]** 가게명 Select + 주문일자 from/to + 조회/초기화<br>**[Panel 1]** 전체 배송 목록 (체크박스 다중선택 + [배송출발][배송완료] 버튼)<br>**[Panel 2]** BBQ 배송지별 묶음 카드 (address_id 기준 groupby) |
-| **주요 기능** | • **[Panel 1]** 배송 목록 DataTable — 배송ID·배송방식·주문일시·배송상태·출발예정·라이더<br>• **[배송출발]** 선택 배송건 일괄 OUT_FOR_DELIVERY 전환, depart_date/time 자동 기록, shipment_event(OUT) INSERT, rider_id = 로그인 seller<br>• **[배송완료]** 선택 배송건 일괄 DELIVERED 전환, shipment_event(ARRIVED) INSERT<br>• **[Panel 2]** BBQ 주문만 필터(order.delivery_method='BBQ'), address_id별 카드 — shipment_id·주문일시·배송예정·상품명·수량 |
+| **주요 기능** | • **[Panel 1]** 배송 목록 DataTable — 배송ID·배송방식·주문일시·배송상태·출발예정·라이더<br>• **[배송출발]** 선택 배송건 일괄 OUT_FOR_DELIVERY 전환, depart_date/time 자동 기록, shipment_event(OUT) INSERT, rider_id = 로그인 seller<br>• **[배송목록 출력]** BBQ 배송 전체목록을 인쇄 다이얼로그로 출력 — 주소(address 테이블)·주문ID·상품명·수량·주문일시·배송예정시간 (address 테이블 미연결 시 order.address_id 값 표시)<br>• **[배송완료]** 선택 배송건 일괄 DELIVERED 전환, shipment_event(ARRIVED) INSERT<br>• **[Panel 2]** BBQ 주문만 필터(order.delivery_method='BBQ'), address_id별 카드 — shipment_id·주문일시·배송예정·상품명·수량 |
 | **업무 규칙** | • rider_id: 로그인 사용자의 seller.seller_id 자동 기록<br>• BBQ 배송완료 일시: shipment_event.created_at으로 기록 (shipment에 delivered_at 컬럼 없음)<br>• Panel 2 groupby 키: order.address_id (text, FK 없음) |
 | **다음 이동** | 배송출발/완료 처리 → 토스트 → 목록 자동 갱신 |
 

@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
-import { Truck, CheckCircle } from "lucide-react";
-import type { ShipmentWithOrder } from "@/lib/repositories/shipment.repository";
+import { ShipmentPrintDialog } from "@/app/(admin)/shipments/requests/_components/shipment-print-dialog";
+import { Truck, CheckCircle, Printer } from "lucide-react";
+import type { ShipmentWithOrder, BbqAddressGroup } from "@/lib/repositories/shipment.repository";
 
 interface ShipmentListPanelProps {
   shipments: ShipmentWithOrder[];
@@ -12,6 +14,7 @@ interface ShipmentListPanelProps {
   onSelectionChange: (keys: Set<string>) => void;
   onStartDelivery: () => void;
   onCompleteDelivery: () => void;
+  bbqGroups: BbqAddressGroup[];
   loading?: boolean;
 }
 
@@ -83,9 +86,11 @@ export function ShipmentListPanel({
   onSelectionChange,
   onStartDelivery,
   onCompleteDelivery,
+  bbqGroups,
   loading = false,
 }: ShipmentListPanelProps) {
   const hasSelection = selectedIds.size > 0;
+  const [printOpen, setPrintOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-2">
@@ -105,6 +110,16 @@ export function ShipmentListPanel({
             <Truck className="h-4 w-4" />
             배송출발
             {hasSelection && ` (${selectedIds.size})`}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPrintOpen(true)}
+            disabled={loading}
+            className="gap-1"
+          >
+            <Printer className="h-4 w-4" />
+            배송목록 출력
           </Button>
           <Button
             variant="primary"
@@ -133,6 +148,8 @@ export function ShipmentListPanel({
           emptyMessage="배송 목록이 없습니다."
         />
       </div>
+
+      <ShipmentPrintDialog open={printOpen} onOpenChange={setPrintOpen} bbqGroups={bbqGroups} />
     </div>
   );
 }
