@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -12,271 +9,241 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
-import { LayerDialog } from "@/components/admin/layer-dialog";
-import { DomainBadge } from "@/components/admin/domain/status-badge-map";
-import { updateCsTicket } from "@/lib/actions/domain/support.actions";
-import type { CsTicketRow } from "@/lib/types/domain/support";
-import type { PaginatedResult } from "@/lib/types/api";
-
-// 티켓 유형 라벨 매핑
-const TICKET_TYPE_CONFIG: Record<string, { label: string; className: string }> = {
-  REFUND: { label: "환불", className: "bg-alert-red-bg text-alert-red border-alert-red/30" },
-  EXCHANGE: { label: "교환", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-  INQUIRY: { label: "문의", className: "bg-blue-50 text-blue-700 border-blue-200" },
-};
-
-const actionFormSchema = z.object({
-  cs_action: z.string().min(1, "처리 결과를 입력하세요"),
-  status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]),
-});
-
-type ActionFormValues = z.infer<typeof actionFormSchema>;
-
-const columns: DataTableColumn<CsTicketRow>[] = [
-  { key: "ticket_id", header: "티켓 ID", className: "w-28" },
-  {
-    key: "type",
-    header: "유형",
-    render: (row) => {
-      const cfg = TICKET_TYPE_CONFIG[row.type ?? ""] ?? {
-        label: row.type ?? "-",
-        className: "",
-      };
-      return (
-        <Badge variant="outline" className={`text-xs font-medium ${cfg.className}`}>
-          {cfg.label}
-        </Badge>
-      );
-    },
-  },
-  {
-    key: "status",
-    header: "상태",
-    render: (row) => <DomainBadge type="csTicket" status={row.status ?? ""} />,
-  },
-  { key: "customer_id", header: "고객 ID" },
-  {
-    key: "cs_contents",
-    header: "내용",
-    render: (row) => (
-      <span className="block max-w-xs truncate text-sm">{row.cs_contents ?? "-"}</span>
-    ),
-  },
-  {
-    key: "created_at",
-    header: "접수일시",
-    render: (row) => row.created_at?.slice(0, 16).replace("T", " ") ?? "-",
-  },
-];
+import { QueryField } from "@/components/admin/query-field";
+import { QueryActions } from "@/components/admin/query-actions";
+import { DateRangePicker } from "@/components/admin/domain/date-range-picker";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { CsAlertBanner } from "@/app/(admin)/support/cs/_components/cs-alert-banner";
+import { CsTicketTable } from "@/app/(admin)/support/cs/_components/cs-ticket-table";
+import { CsDetailPanel } from "@/app/(admin)/support/cs/_components/cs-detail-panel";
+import { CsActionPanel } from "@/app/(admin)/support/cs/_components/cs-action-panel";
+import { CsPrintDialog } from "@/app/(admin)/support/cs/_components/cs-print-dialog";
+import type { ActionFormValues } from "@/app/(admin)/support/cs/_components/cs-action-panel";
+import { fetchCsTicketsByStore, updateCsTicket } from "@/lib/actions/domain/support.actions";
+import type { CsTicketWithJoins } from "@/lib/types/domain/support";
 
 interface CsClientProps {
-  initialData: PaginatedResult<CsTicketRow>;
-  initialType: string;
-  initialStatus: string;
+  stores: { store_id: string; name: string }[];
+  initialTickets: CsTicketWithJoins[];
+  initialOpenCount: number;
+  initialFrom: string;
+  initialTo: string;
 }
 
-export function CsClient({ initialData, initialType, initialStatus }: CsClientProps) {
-  const router = useRouter();
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function toDateStr(date: Date | undefined, fallback: string): string {
+  if (!date) return fallback;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function CsClient({
+  stores,
+  initialTickets,
+  initialOpenCount,
+  initialFrom,
+  initialTo,
+}: CsClientProps) {
   const [isPending, startTransition] = useTransition();
-  const [typeFilter, setTypeFilter] = useState(initialType);
-  const [statusFilter, setStatusFilter] = useState(initialStatus);
-  const [selectedTicket, setSelectedTicket] = useState<CsTicketRow | null>(null);
 
-  const form = useForm<ActionFormValues>({
-    resolver: zodResolver(actionFormSchema),
-    defaultValues: { cs_action: "", status: "IN_PROGRESS" },
-  });
+  // ─── 검색 조건 ───────────────────────────────────────────────────────────────
+  const [selectedStoreId, setSelectedStoreId] = useState(stores[0]?.store_id ?? "");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(parseLocalDate(initialFrom));
+  const [dateTo, setDateTo] = useState<Date | undefined>(parseLocalDate(initialTo));
+  const [statusFilter, setStatusFilter] = useState<"OPEN" | "IN_PROGRESS" | "CLOSED" | "ALL">(
+    "OPEN"
+  );
 
-  // 필터 변경 시 URL 파라미터 업데이트 → 서버 재조회
-  const handleTypeFilter = (value: string) => {
-    setTypeFilter(value);
-    startTransition(() => {
-      const params = new URLSearchParams();
-      if (value !== "ALL") params.set("type", value);
-      if (statusFilter !== "ALL") params.set("status", statusFilter);
-      router.push(`?${params.toString()}`);
-    });
-  };
+  // ─── 데이터 ──────────────────────────────────────────────────────────────────
+  const [tickets, setTickets] = useState<CsTicketWithJoins[]>(initialTickets);
+  const [openCount, setOpenCount] = useState(initialOpenCount);
+  const [activeTicket, setActiveTicket] = useState<CsTicketWithJoins | null>(null);
 
-  const handleStatusFilter = (value: string) => {
-    setStatusFilter(value);
-    startTransition(() => {
-      const params = new URLSearchParams();
-      if (typeFilter !== "ALL") params.set("type", typeFilter);
-      if (value !== "ALL") params.set("status", value);
-      router.push(`?${params.toString()}`);
-    });
-  };
+  // ─── 다이얼로그 ──────────────────────────────────────────────────────────────
+  const [printOpen, setPrintOpen] = useState(false);
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
 
-  const openDetail = (row: CsTicketRow) => {
-    form.reset({
-      cs_action: row.cs_action ?? "",
-      status: (row.status as ActionFormValues["status"]) ?? "OPEN",
-    });
-    setSelectedTicket(row);
-  };
-
-  const handleSubmit = async (values: ActionFormValues) => {
-    if (!selectedTicket) return;
-
-    const result = await updateCsTicket({
-      ticket_id: selectedTicket.ticket_id,
-      status: values.status,
-      cs_action: values.cs_action,
-    });
-
-    if (result.ok) {
-      toast.success("CS 티켓이 처리되었습니다.");
-      setSelectedTicket(null);
-      form.reset();
-      router.refresh();
-    } else {
-      toast.error(result.error.message ?? "처리 중 오류가 발생했습니다.");
+  // ─── 조회 ─────────────────────────────────────────────────────────────────────
+  const doSearch = () => {
+    if (!selectedStoreId) {
+      toast.warning("가게를 선택해 주세요.");
+      return;
     }
+    const from = toDateStr(dateFrom, initialFrom);
+    const to = toDateStr(dateTo, initialTo);
+
+    startTransition(async () => {
+      const result = await fetchCsTicketsByStore({
+        store_id: selectedStoreId,
+        from_date: from,
+        to_date: to,
+        status: statusFilter,
+      });
+      if (!result.ok) {
+        toast.error(result.error?.message ?? "CS 목록 조회에 실패했습니다.");
+        return;
+      }
+      const { tickets: newTickets, openCount: newOpenCount } = result.data as {
+        tickets: CsTicketWithJoins[];
+        openCount: number;
+      };
+      setTickets(newTickets);
+      setOpenCount(newOpenCount);
+      setActiveTicket(null);
+    });
+  };
+
+  const doReset = () => {
+    const today = new Date();
+    setSelectedStoreId(stores[0]?.store_id ?? "");
+    setDateFrom(today);
+    setDateTo(today);
+    setStatusFilter("OPEN");
+    setTickets(initialTickets);
+    setOpenCount(initialOpenCount);
+    setActiveTicket(null);
+  };
+
+  // ─── 저장 ─────────────────────────────────────────────────────────────────────
+  const handleSave = (values: ActionFormValues) => {
+    if (!activeTicket) return;
+    startTransition(async () => {
+      const result = await updateCsTicket({
+        ticket_id: activeTicket.ticket_id,
+        cs_action: values.cs_action,
+        status: values.status,
+      });
+      if (!result.ok) {
+        toast.error(result.error?.message ?? "저장에 실패했습니다.");
+        return;
+      }
+      toast.success("CS 처리결과가 저장되었습니다.");
+
+      const updated: CsTicketWithJoins = {
+        ...activeTicket,
+        cs_action: values.cs_action,
+        status: values.status,
+      };
+      setTickets((prev) => prev.map((t) => (t.ticket_id === activeTicket.ticket_id ? updated : t)));
+      setActiveTicket(updated);
+
+      // 저장 후 자동으로 Follow-up 인쇄 다이얼로그 오픈
+      setPrintOpen(true);
+    });
+  };
+
+  // ─── 닫기 ─────────────────────────────────────────────────────────────────────
+  const handleClose = () => {
+    setCloseConfirmOpen(true);
   };
 
   return (
-    <div className="p-6">
-      {/* 필터 영역 */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Select value={typeFilter} onValueChange={handleTypeFilter} disabled={isPending}>
-          <SelectTrigger className="h-8 w-32">
-            <SelectValue placeholder="유형" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">전체 유형</SelectItem>
-            <SelectItem value="REFUND">환불</SelectItem>
-            <SelectItem value="EXCHANGE">교환</SelectItem>
-            <SelectItem value="INQUIRY">문의</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={handleStatusFilter} disabled={isPending}>
-          <SelectTrigger className="h-8 w-32">
-            <SelectValue placeholder="상태" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">전체 상태</SelectItem>
-            <SelectItem value="OPEN">접수</SelectItem>
-            <SelectItem value="IN_PROGRESS">처리중</SelectItem>
-            <SelectItem value="CLOSED">완료</SelectItem>
-          </SelectContent>
-        </Select>
+    <div className="flex flex-1 flex-col gap-4 overflow-hidden p-4">
+      {/* 검색 조건 */}
+      <div className="bg-card flex flex-wrap items-end gap-3 rounded-lg border p-4">
+        <QueryField label="가게">
+          {stores.length === 0 ? (
+            <span className="text-sm text-gray-400">소속 가게 없음</span>
+          ) : (
+            <Select value={selectedStoreId} onValueChange={setSelectedStoreId} disabled={isPending}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="가게 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                {stores.map((s) => (
+                  <SelectItem key={s.store_id} value={s.store_id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </QueryField>
+
+        <QueryField label="기간">
+          <DateRangePicker
+            from={dateFrom}
+            to={dateTo}
+            onFromChange={setDateFrom}
+            onToChange={setDateTo}
+            disabled={isPending}
+          />
+        </QueryField>
+
+        <QueryField label="상태">
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as "OPEN" | "IN_PROGRESS" | "CLOSED" | "ALL")}
+            disabled={isPending}
+          >
+            <SelectTrigger className="w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="OPEN">OPEN</SelectItem>
+              <SelectItem value="IN_PROGRESS">처리중</SelectItem>
+              <SelectItem value="CLOSED">완료</SelectItem>
+              <SelectItem value="ALL">전체</SelectItem>
+            </SelectContent>
+          </Select>
+        </QueryField>
+
+        <QueryActions onSearch={doSearch} onReset={doReset} loading={isPending} />
       </div>
 
-      <DataTable
-        columns={columns}
-        data={initialData.data}
-        rowKey={(row) => row.ticket_id}
-        searchPlaceholder="티켓ID·고객ID 검색"
-        onRowClick={openDetail}
-        showRowActions={false}
-        emptyMessage="CS 티켓이 없습니다."
-      />
+      {/* OPEN 알림 배너 */}
+      <CsAlertBanner openCount={openCount} />
 
-      {/* 상세 다이얼로그 */}
-      <LayerDialog
-        open={selectedTicket !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedTicket(null);
-            form.reset();
-          }
-        }}
-        title="CS 티켓 상세"
-        size="lg"
-        onConfirm={form.handleSubmit(handleSubmit)}
-        confirmLabel="처리 저장"
-      >
-        <div className="space-y-4 p-4">
-          {/* 티켓 기본 정보 */}
-          <div className="bg-panel border-separator space-y-2 rounded border p-3 text-sm">
-            <div className="flex items-center gap-4">
-              <span className="text-text-placeholder w-20">티켓 ID</span>
-              <span className="font-medium">{selectedTicket?.ticket_id}</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-text-placeholder w-20">유형</span>
-              {selectedTicket?.type && (
-                <Badge
-                  variant="outline"
-                  className={`text-xs font-medium ${TICKET_TYPE_CONFIG[selectedTicket.type]?.className ?? ""}`}
-                >
-                  {TICKET_TYPE_CONFIG[selectedTicket.type]?.label ?? selectedTicket.type}
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-text-placeholder w-20">주문 ID</span>
-              <span>{selectedTicket?.order_id ?? "-"}</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-text-placeholder w-20">접수일시</span>
-              <span>{selectedTicket?.created_at?.slice(0, 16).replace("T", " ") ?? "-"}</span>
-            </div>
-          </div>
-
-          {/* 고객 문의 내용 */}
-          <div>
-            <p className="mb-2 text-sm font-medium">고객 문의 내용</p>
-            <div className="bg-panel border-separator rounded border p-3 text-sm leading-relaxed">
-              {selectedTicket?.cs_contents ?? "-"}
-            </div>
-          </div>
-
-          {/* 처리 결과 폼 */}
-          <Form {...form}>
-            <form className="space-y-3">
-              <FormField
-                control={form.control}
-                name="cs_action"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>처리 결과 *</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="처리 결과를 입력하세요" rows={4} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>처리 상태</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="OPEN">접수</SelectItem>
-                        <SelectItem value="IN_PROGRESS">처리중</SelectItem>
-                        <SelectItem value="CLOSED">완료</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </form>
-          </Form>
+      {/* Panel 1: CS 목록 */}
+      <div className="bg-card rounded-lg border p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700">
+            고객요청정보
+            <span className="ml-1 text-gray-400">({tickets.length}건)</span>
+          </span>
         </div>
-      </LayerDialog>
+        <CsTicketTable
+          tickets={tickets}
+          activeTicketId={activeTicket?.ticket_id ?? null}
+          onRowClick={setActiveTicket}
+          loading={isPending}
+        />
+      </div>
+
+      {/* Panel 2: 상세 + 처리 */}
+      <div className="bg-card grid flex-1 grid-cols-2 gap-4 rounded-lg border p-4">
+        <CsDetailPanel ticket={activeTicket} />
+        <CsActionPanel
+          ticket={activeTicket}
+          onClose={handleClose}
+          onSave={handleSave}
+          onPrint={() => setPrintOpen(true)}
+          loading={isPending}
+        />
+      </div>
+
+      {/* CS Follow-up 인쇄 다이얼로그 */}
+      <CsPrintDialog open={printOpen} onOpenChange={setPrintOpen} ticket={activeTicket} />
+
+      {/* 닫기 시 변경사항 확인 */}
+      <ConfirmDialog
+        open={closeConfirmOpen}
+        onOpenChange={setCloseConfirmOpen}
+        title="변경사항이 있습니다"
+        description="저장하지 않은 변경사항이 있습니다. 정말 닫으시겠습니까?"
+        confirmLabel="닫기"
+        cancelLabel="취소"
+        destructive={false}
+        onConfirm={() => {
+          setActiveTicket(null);
+        }}
+      />
     </div>
   );
 }

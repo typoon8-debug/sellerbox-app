@@ -81,7 +81,7 @@ export class ShipmentRepository extends BaseRepository<"shipment"> {
           delivery_method,
           address_id,
           order_item (
-            quantity,
+            qty,
             item:item_id ( name )
           )
         )
@@ -108,7 +108,7 @@ export class ShipmentRepository extends BaseRepository<"shipment"> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const items = (row.order?.order_item ?? []).map((oi: any) => ({
         name: oi.item?.name ?? "-",
-        qty: oi.quantity ?? 0,
+        qty: oi.qty ?? 0,
       }));
 
       groupMap.get(addressId)!.orders.push({

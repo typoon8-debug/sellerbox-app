@@ -144,7 +144,7 @@ export const MENU_TREE: MenuNode[] = [
     children: [
       {
         id: "customer-support-cs",
-        label: "고객 CS",
+        label: "고객지원",
         href: "/support/cs",
         screenNumber: "50001",
         section: "main",

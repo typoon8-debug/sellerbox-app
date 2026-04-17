@@ -1,73 +1,68 @@
-// F024: 리뷰 관리 - Server Component (실제 Supabase 연동)
-import { createClient } from "@/lib/supabase/server";
-import { ReviewRepository } from "@/lib/repositories/review.repository";
-import { CeoReviewRepository } from "@/lib/repositories/ceo-review.repository";
+// F024: 리뷰관리 화면
+export const dynamic = "force-dynamic";
+
 import { PageTitleBar } from "@/components/contents/page-title-bar";
 import { ReviewsClient } from "@/app/(admin)/support/reviews/reviews-client";
-import type { ReviewRow, CeoReviewRow } from "@/lib/types/domain/support";
-import type { PaginatedResult } from "@/lib/types/api";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { SellerRepository } from "@/lib/repositories/seller.repository";
+import { ReviewRepository } from "@/lib/repositories/review.repository";
+import type { ReviewWithJoins } from "@/lib/types/domain/support";
 
-interface SearchParams {
-  status?: string;
-  page?: string;
-}
+export default async function SupportReviewsPage() {
+  const sessionClient = await createClient();
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser();
 
-export interface ReviewWithCeo extends ReviewRow {
-  ceoReview: CeoReviewRow | null;
-}
+  const adminSupabase = createAdminClient();
 
-export default async function SupportReviewsPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const params = await searchParams;
-  const supabase = await createClient();
+  // 로그인 seller의 소속 가게 목록 조회
+  let stores: { store_id: string; name: string }[] = [];
+  if (user?.email) {
+    const sellerRepo = new SellerRepository(adminSupabase);
+    const sellers = await sellerRepo.findByEmail(user.email);
+    const storeIds = [...new Set(sellers.map((s) => s.store_id).filter(Boolean))] as string[];
 
-  // 필터 구성
-  const filters: Record<string, string> = {};
-  if (params.status && params.status !== "ALL") filters.status = params.status;
-
-  const page = params.page ? parseInt(params.page, 10) : 1;
-
-  let reviewResult: PaginatedResult<ReviewRow>;
-  let ceoReviews: CeoReviewRow[] = [];
-
-  try {
-    const reviewRepo = new ReviewRepository(supabase);
-    reviewResult = await reviewRepo.paginate({ page, pageSize: 20, filters });
-
-    // 해당 페이지의 review_id 목록으로 ceo_review 조회
-    if (reviewResult.data.length > 0) {
-      const reviewIds = reviewResult.data.map((r) => r.review_id);
-      const ceoReviewRepo = new CeoReviewRepository(supabase);
-      const allCeoReviews = await ceoReviewRepo.findAll();
-      ceoReviews = allCeoReviews.filter((cr) => reviewIds.includes(cr.reviewId));
+    if (storeIds.length > 0) {
+      const { data: storeRows } = await adminSupabase
+        .from("store")
+        .select("store_id, name")
+        .in("store_id", storeIds)
+        .order("name", { ascending: true });
+      stores = (storeRows ?? []) as { store_id: string; name: string }[];
     }
-  } catch {
-    // DB 연결 실패 시 빈 결과 반환
-    reviewResult = { data: [], totalCount: 0, hasNextPage: false, page: 1, pageSize: 20 };
   }
 
-  // review + ceo_review 조합
-  const reviewsWithCeo: ReviewWithCeo[] = reviewResult.data.map((review) => ({
-    ...review,
-    ceoReview: ceoReviews.find((cr) => cr.reviewId === review.review_id) ?? null,
-  }));
+  // 오늘 기준 초기 리뷰 조회 (첫 번째 가게)
+  const today = new Date().toISOString().split("T")[0];
+  const firstStoreId = stores[0]?.store_id;
+  const reviewRepo = new ReviewRepository(adminSupabase);
 
-  const initialData: PaginatedResult<ReviewWithCeo> = {
-    ...reviewResult,
-    data: reviewsWithCeo,
-  };
+  let initialReviews: ReviewWithJoins[] = [];
+  if (firstStoreId) {
+    try {
+      initialReviews = await reviewRepo.findByStoreAndDateRange(firstStoreId, today, today, {
+        status: "ALL",
+      });
+    } catch {
+      // DB 연결 실패 시 빈 결과
+    }
+  }
 
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <PageTitleBar
         title="리뷰관리"
         screenNumber="50002"
         breadcrumbs={[{ label: "고객지원" }, { label: "리뷰관리" }]}
       />
-      <ReviewsClient initialData={initialData} initialStatus={params.status ?? "ALL"} />
+      <ReviewsClient
+        stores={stores}
+        initialReviews={initialReviews}
+        initialFrom={today}
+        initialTo={today}
+      />
     </div>
   );
 }

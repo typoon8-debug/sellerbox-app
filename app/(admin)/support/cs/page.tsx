@@ -1,52 +1,73 @@
-// F023: CS 관리 - Server Component (실제 Supabase 연동)
-import { createClient } from "@/lib/supabase/server";
-import { CsTicketRepository } from "@/lib/repositories/cs-ticket.repository";
+// F023: 고객지원 화면 (고객 CS 처리)
+export const dynamic = "force-dynamic";
+
 import { PageTitleBar } from "@/components/contents/page-title-bar";
 import { CsClient } from "@/app/(admin)/support/cs/cs-client";
-import type { PaginatedResult } from "@/lib/types/api";
-import type { CsTicketRow } from "@/lib/types/domain/support";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { SellerRepository } from "@/lib/repositories/seller.repository";
+import { CsTicketRepository } from "@/lib/repositories/cs-ticket.repository";
+import type { CsTicketWithJoins } from "@/lib/types/domain/support";
 
-interface SearchParams {
-  type?: string;
-  status?: string;
-  page?: string;
-}
+export default async function SupportCsPage() {
+  const sessionClient = await createClient();
+  const {
+    data: { user },
+  } = await sessionClient.auth.getUser();
 
-export default async function SupportCsPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const params = await searchParams;
-  const supabase = await createClient();
-  const repo = new CsTicketRepository(supabase);
+  const adminSupabase = createAdminClient();
 
-  // 필터 구성
-  const filters: Record<string, string> = {};
-  if (params.type && params.type !== "ALL") filters.type = params.type;
-  if (params.status && params.status !== "ALL") filters.status = params.status;
+  // 로그인 seller의 소속 가게 목록 조회
+  let stores: { store_id: string; name: string }[] = [];
+  if (user?.email) {
+    const sellerRepo = new SellerRepository(adminSupabase);
+    const sellers = await sellerRepo.findByEmail(user.email);
+    const storeIds = [...new Set(sellers.map((s) => s.store_id).filter(Boolean))] as string[];
 
-  const page = params.page ? parseInt(params.page, 10) : 1;
+    if (storeIds.length > 0) {
+      const { data: storeRows } = await adminSupabase
+        .from("store")
+        .select("store_id, name")
+        .in("store_id", storeIds)
+        .order("name", { ascending: true });
+      stores = (storeRows ?? []) as { store_id: string; name: string }[];
+    }
+  }
 
-  let initialData: PaginatedResult<CsTicketRow>;
-  try {
-    initialData = await repo.paginate({ page, pageSize: 20, filters });
-  } catch {
-    // DB 연결 실패 시 빈 결과 반환
-    initialData = { data: [], totalCount: 0, hasNextPage: false, page: 1, pageSize: 20 };
+  // 오늘 기준 초기 OPEN CS 조회 (첫 번째 가게)
+  const today = new Date().toISOString().split("T")[0];
+  const firstStoreId = stores[0]?.store_id;
+  const csRepo = new CsTicketRepository(adminSupabase);
+
+  let initialTickets: CsTicketWithJoins[] = [];
+  let initialOpenCount = 0;
+
+  if (firstStoreId) {
+    try {
+      [initialTickets, initialOpenCount] = await Promise.all([
+        csRepo.findByStoreAndDateRange(firstStoreId, today, today, {
+          status: "OPEN",
+        }),
+        csRepo.countOpenByStore(firstStoreId, today, today),
+      ]);
+    } catch {
+      // DB 연결 실패 시 빈 결과
+    }
   }
 
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <PageTitleBar
-        title="고객 CS"
+        title="고객지원"
         screenNumber="50001"
-        breadcrumbs={[{ label: "고객지원" }, { label: "고객 CS" }]}
+        breadcrumbs={[{ label: "고객지원" }, { label: "고객지원" }]}
       />
       <CsClient
-        initialData={initialData}
-        initialType={params.type ?? "ALL"}
-        initialStatus={params.status ?? "ALL"}
+        stores={stores}
+        initialTickets={initialTickets}
+        initialOpenCount={initialOpenCount}
+        initialFrom={today}
+        initialTo={today}
       />
     </div>
   );

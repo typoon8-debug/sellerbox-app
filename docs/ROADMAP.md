@@ -794,6 +794,60 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   #### Phase E: 메뉴 정리
   - `lib/navigation/menu-items.ts`: 40005 label "배송 요청 관리" → "배송관리", 40006·40007 제거
 
+- ✅ **Task 037: 프로모션 관리 통합 화면 재설계 (F014·F015)** - 완료
+
+  #### 요구사항
+  - 프로모션 관리(F014)·프로모션 상품 관리(F015)를 기존 단순 DataTable+모달 구조에서 MDI 2패널 구조로 재설계
+  - 세션 기반 가게 스코프: 로그인 OWNER 소속 가게만 조회/저장
+
+  #### 수정 파일
+  - `lib/repositories/promotion.repository.ts`: `findByStoreId()`, `softDelete()` 추가
+  - `lib/repositories/promotion-item.repository.ts`: `findByPromotionId()`, `deleteByItemId()` 추가
+  - `lib/schemas/domain/promotion.schema.ts`: `updatePromotionSchema`, `fetchPromotionsSchema` 등 추가
+  - `lib/actions/domain/promotion.actions.ts`: `fetchPromotionsByStore`, `fetchPromotionItems` 액션 추가
+  - `app/(admin)/promotions/page.tsx` 재작성: 세션 기반 가게 스코프 Server Component
+  - `app/(admin)/promotions/promotions-client.tsx` 재작성: 검색조건 + Panel 1(프로모션) + Panel 2(프로모션 상품) 통합
+  - `app/(admin)/promotions/_components/` 신규: 등록 다이얼로그, 상품 그리드
+  - `app/(admin)/promotions/loading.tsx` 신규
+  - `app/(admin)/promotions/items/page.tsx` 재작성: `/promotions`로 redirect
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run build` 성공
+
+- ✅ **Task 038: 배송관리 버그 수정 + 고객지원/리뷰관리 MDI 재설계 (F023·F024)** - 완료
+
+  #### 배송관리 버그 수정
+  - **문제**: `/shipments/requests` 접속 시 `column order_item_2.quantity does not exist` 에러 → 전체 화면 로딩 실패
+  - **원인**: `lib/repositories/shipment.repository.ts` BBQ 그룹 쿼리에서 `order_item.quantity` 참조 (실제 DB 컬럼명: `qty`)
+  - **수정**: L84 nested select `quantity` → `qty`, L111 매핑 `oi.quantity ?? 0` → `oi.qty ?? 0`
+
+  #### 고객지원 재설계 (F023) — 메뉴명 변경 포함
+  - **메뉴명 변경**: "고객 CS" → "고객지원" (`lib/navigation/menu-items.ts` leaf 50001)
+  - **화면 구조**: 기존 단순 DataTable+모달 → MDI 2패널 재설계 (검색조건·배너·Panel1·Panel2)
+  - **핵심 구현**: cs_ticket에 store_id 없음 → order 경유 2단계 쿼리
+
+  #### 리뷰관리 재설계 (F024)
+  - **화면 구조**: 기존 단순 DataTable+모달 → MDI 2패널 재설계
+  - **저장 분기**: ceo_review === null → INSERT, 있으면 → UPDATE, in-place row 갱신
+  - **ceo_review PK**: `ceo_reviewId` (camelCase) — 앱 레벨 조인 적용
+
+  #### 수정/신규 파일
+  - `lib/types/domain/support.ts`: `CsTicketWithJoins`, `ReviewWithJoins` 뷰 타입 추가
+  - `lib/repositories/cs-ticket.repository.ts`: `findByStoreAndDateRange()`, `countOpenByStore()` 추가
+  - `lib/repositories/review.repository.ts`: `findByStoreAndDateRange()` 추가
+  - `lib/repositories/ceo-review.repository.ts`: `findByReviewIds()` 폴백 메서드 추가
+  - `lib/schemas/domain/support.schema.ts`: `fetchCsTicketsSchema`, `fetchReviewsSchema` 추가
+  - `lib/actions/domain/support.actions.ts`: `fetchCsTicketsByStore`, `fetchReviewsByStore` 추가
+  - `app/(admin)/support/cs/` 전면 재작성 + `_components/` 5개 신규
+  - `app/(admin)/support/reviews/` 전면 재작성 + `_components/` 3개 신규
+
+  #### 검증 결과
+  - `npm run typecheck` 에러 없음
+  - `npm run lint` 에러 없음
+  - `npm run build` 성공
+  - Playwright: 배송관리·고객지원·리뷰관리 정상 로딩, MDI 레이아웃 확인
+
 ---
 
 ## 품질 체크리스트
