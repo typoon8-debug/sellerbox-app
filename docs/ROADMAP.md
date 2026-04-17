@@ -761,6 +761,39 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `npm run typecheck` 에러 없음
   - `npm run build` 성공 (`/orders/fulfillment` 33.7kB, redirect 스텁 3개 183B)
 
+- ✅ **Task 036: 배송관리 통합 화면 + 세션 가게/테넌트 보관** - 완료
+
+  #### 요구사항
+  1. 배송 관련 3개 화면(40005·40006·40007)을 `/shipments/requests` 단일 화면으로 통합
+  2. Zustand 전역 세션 스토어(`user-session-store`)에 sellerId·storeId·tenantId·stores 보관
+  3. Panel 1: 전체 배송 목록 + 체크박스 + [배송출발][배송완료] 버튼
+  4. Panel 2: BBQ 주문을 `order.address_id`별로 그룹화한 카드 묶음
+  5. rider_id = 로그인 사용자의 `seller.seller_id`
+
+  #### Phase A: 세션 스토어
+  - `lib/stores/user-session-store.ts` 신규: `{ sellerId, storeId, tenantId, stores, setSession, clearSession }`
+  - `components/frame/session-hydrator.tsx` 신규: 마운트 시 `setSession()` 호출 (side-effect only)
+  - `app/(admin)/layout.tsx`: 가게 목록 조회(store.tenant_id 포함) + `<SessionHydrator>` 마운트
+
+  #### Phase B: shipment 도메인 레이어
+  - `lib/repositories/shipment.repository.ts`: `findByStoreAndDateRange`, `findBbqGroupedByAddress`, `startDelivery`, `completeDelivery` 4개 메서드 추가
+  - `lib/schemas/domain/shipment.schema.ts`: `fetchShipmentsSchema`, `fetchBbqGroupsSchema`, `batchDeliverySchema` 추가
+  - `lib/actions/domain/shipment.actions.ts`: `fetchShipmentsByStore`, `fetchBbqShipmentGroups`, `batchStartDelivery`, `batchCompleteDelivery` 4개 액션 추가
+
+  #### Phase C: 배송관리 통합 화면
+  - `app/(admin)/shipments/requests/page.tsx` 재작성: 가게 목록 + 초기 데이터 조회 → `<DeliveryClient>` 전달
+  - `app/(admin)/shipments/requests/delivery-client.tsx` 신규: 검색조건·Panel 1·Panel 2 통합 Client Component
+  - `app/(admin)/shipments/requests/_components/shipment-list-panel.tsx` 신규: DataTable 기반 선택가능 목록
+  - `app/(admin)/shipments/requests/_components/bbq-group-panel.tsx` 신규: 배송지별 카드 묶음
+  - `app/(admin)/shipments/requests/loading.tsx` 신규: 2-패널 스켈레톤
+
+  #### Phase D: 레거시 redirect 스텁
+  - `app/(admin)/shipments/quick-closing/page.tsx`, `routing/page.tsx`: redirect 스텁 (`/shipments/requests`)
+  - 삭제: `quick-closing-client.tsx`, `routing-client.tsx`, `requests-client.tsx`
+
+  #### Phase E: 메뉴 정리
+  - `lib/navigation/menu-items.ts`: 40005 label "배송 요청 관리" → "배송관리", 40006·40007 제거
+
 ---
 
 ## 품질 체크리스트
