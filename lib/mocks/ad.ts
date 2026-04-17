@@ -9,7 +9,7 @@ import type {
 export const MOCK_AD_CONTENTS: AdContentRow[] = [
   {
     content_id: "ad-001",
-    placement_id: "place-001",
+    placement_id: "HERO",
     store_id: "store-001",
     title: "봄맞이 신선 채소 특가",
     ad_image: null,
@@ -21,7 +21,7 @@ export const MOCK_AD_CONTENTS: AdContentRow[] = [
   },
   {
     content_id: "ad-002",
-    placement_id: "place-001",
+    placement_id: "HERO",
     store_id: "store-001",
     title: "한우 불고기 특별 이벤트",
     ad_image: null,
@@ -33,7 +33,7 @@ export const MOCK_AD_CONTENTS: AdContentRow[] = [
   },
   {
     content_id: "ad-003",
-    placement_id: "place-002",
+    placement_id: "MID_1",
     store_id: "store-001",
     title: "어린이날 기념 할인 배너",
     ad_image: null,
@@ -45,7 +45,7 @@ export const MOCK_AD_CONTENTS: AdContentRow[] = [
   },
   {
     content_id: "ad-004",
-    placement_id: "place-001",
+    placement_id: "HERO",
     store_id: "store-001",
     title: "설날 특별 기획전",
     ad_image: null,

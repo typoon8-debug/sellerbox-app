@@ -110,6 +110,8 @@ export type CouponStatus = "ISSUED" | "USED" | "EXPIRED" | "CANCELLED";
 export type CouponRedemptionStatus = "APPLIED" | "REVOKED" | "FAILED";
 
 // ─── 광고 ─────────────────────────────────────────────────────────────────────
+export type AdPlacement = "HERO" | "MID_1" | "MID_2" | "FOOTER";
+
 export type AdContentStatus = "DRAFT" | "READY" | "ACTIVE" | "PAUSED" | "ENDED";
 
 export type AdScheduleStatus = "SCHEDULED" | "ACTIVE" | "PAUSED" | "ENDED";

@@ -40,6 +40,9 @@ yarn-error.log*
 supabase/.temp/
 .claude/scheduled_tasks.lock
 
+# MCP 설정 (API 키 포함)
+.mcp.json
+
 # 백업 / 로컬 전용
 backup/
 shrimp_data/

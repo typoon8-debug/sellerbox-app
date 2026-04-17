@@ -1318,10 +1318,10 @@ export type Database = {
       };
 
       // ─── 광고 콘텐츠 ──────────────────────────────────────────────
-      fp_ad_content: {
+      ad_content: {
         Row: {
           content_id: string;
-          placement_id: string;
+          placement_id: "HERO" | "MID_1" | "MID_2" | "FOOTER";
           store_id: string;
           title: string;
           ad_image: string | null;
@@ -1333,7 +1333,7 @@ export type Database = {
         };
         Insert: {
           content_id?: string;
-          placement_id: string;
+          placement_id: "HERO" | "MID_1" | "MID_2" | "FOOTER";
           store_id: string;
           title: string;
           ad_image?: string | null;
@@ -1345,7 +1345,7 @@ export type Database = {
         };
         Update: {
           content_id?: string;
-          placement_id?: string;
+          placement_id?: "HERO" | "MID_1" | "MID_2" | "FOOTER";
           store_id?: string;
           title?: string;
           ad_image?: string | null;
@@ -1359,7 +1359,7 @@ export type Database = {
       };
 
       // ─── 광고 일정 ────────────────────────────────────────────────
-      fp_ad_schedule: {
+      ad_schedule: {
         Row: {
           schedule_id: string;
           content_id: string;
@@ -1403,7 +1403,7 @@ export type Database = {
       };
 
       // ─── 광고 타겟 ────────────────────────────────────────────────
-      fp_ad_target: {
+      ad_target: {
         Row: {
           target_id: string;
           content_id: string;
@@ -1444,7 +1444,7 @@ export type Database = {
       };
 
       // ─── 광고 한도 ────────────────────────────────────────────────
-      fp_ad_cap: {
+      ad_cap: {
         Row: {
           cap_id: string;
           content_id: string;
@@ -1482,7 +1482,7 @@ export type Database = {
       };
 
       // ─── 광고 로그 ────────────────────────────────────────────────
-      fp_ad_log: {
+      ad_log: {
         Row: {
           log_id: string;
           content_id: string;

@@ -166,5 +166,5 @@ import { Button } from "@/components/ui/button";
 - **다크 모드**: next-themes를 통해 시스템 설정 기반 자동 전환 지원
 
 💡 **상세 규칙은 위 개발 가이드 문서들을 참조하세요**
-- 테스트 계정: typoon8@gmail.com / chan1026*$*
-- 관리자 테스트 계정: typoon8@gmail.com / chan1026*$*
+- 테스트 계정: lotte1@lotte.co.kr / chan1026*$*
+- 관리자 테스트 계정: lotte1@lotte.co.kr / chan1026*$*

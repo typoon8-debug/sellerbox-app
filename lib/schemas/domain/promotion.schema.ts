@@ -48,6 +48,36 @@ export const addPromotionItemSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
 });
 
+export const fetchPromotionsByStoreSchema = z.object({
+  store_id: z.string().min(1, "가게 ID가 필요합니다."),
+});
+
+export const fetchPromotionTabsSchema = z.object({
+  promo_id: z.string().min(1, "프로모션 ID가 필요합니다."),
+  store_id: z.string().min(1, "가게 ID가 필요합니다."),
+});
+
+export const softDeletePromotionSchema = z.object({
+  promo_id: z.string().min(1, "프로모션 ID가 필요합니다."),
+});
+
+export const updatePromotionItemSchema = z.object({
+  id: z.string().min(1, "프로모션 상품 ID가 필요합니다."),
+  condition_qty: z.number().int().min(1).optional().nullable(),
+  reward_qty: z.number().int().min(1).optional().nullable(),
+  reward_item_id: z.string().min(1).optional().nullable(),
+  limit_per_order: z.number().int().min(1).optional().nullable(),
+});
+
+export const softDeletePromotionItemSchema = z.object({
+  id: z.string().min(1, "프로모션 상품 ID가 필요합니다."),
+});
+
 export type CreatePromotionInput = z.infer<typeof createPromotionSchema>;
 export type UpdatePromotionInput = z.infer<typeof updatePromotionSchema>;
 export type AddPromotionItemInput = z.infer<typeof addPromotionItemSchema>;
+export type FetchPromotionsByStoreInput = z.infer<typeof fetchPromotionsByStoreSchema>;
+export type FetchPromotionTabsInput = z.infer<typeof fetchPromotionTabsSchema>;
+export type SoftDeletePromotionInput = z.infer<typeof softDeletePromotionSchema>;
+export type UpdatePromotionItemInput = z.infer<typeof updatePromotionItemSchema>;
+export type SoftDeletePromotionItemInput = z.infer<typeof softDeletePromotionItemSchema>;
