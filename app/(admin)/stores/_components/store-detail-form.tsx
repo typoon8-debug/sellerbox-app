@@ -38,7 +38,7 @@ const storeDetailFormSchema = z.object({
   max_delivery_time: z.number().int().min(0).optional(),
   operation_hours: z.string().optional(),
   closed_days: z.string().optional(),
-  delivery_dddress: z.string().optional(),
+  delivery_address: z.string().optional(),
   reg_number: z.string().optional(),
   jumin_number: z.string().optional(),
   ceo_name: z.string().optional(),
@@ -445,7 +445,7 @@ export function StoreDetailForm({ store, onClose, onSaved }: StoreDetailFormProp
             />
             <FormField
               control={form.control}
-              name="delivery_dddress"
+              name="delivery_address"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xs">배달지역</FormLabel>
@@ -625,7 +625,7 @@ function getDefaultValues(store: StoreRow): StoreDetailFormValues {
     max_delivery_time: store.max_delivery_time ?? undefined,
     operation_hours: store.operation_hours ?? "",
     closed_days: store.closed_days ?? "",
-    delivery_dddress: store.delivery_dddress ?? "",
+    delivery_address: store.delivery_address ?? "",
     reg_number: store.reg_number ?? "",
     jumin_number: store.jumin_number ?? "",
     ceo_name: store.ceo_name ?? "",

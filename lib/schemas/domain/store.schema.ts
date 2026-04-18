@@ -42,8 +42,7 @@ export const updateStoreSchema = z.object({
   // 운영 관련
   operation_hours: z.string().optional(),
   closed_days: z.string().optional(),
-  // DB 오타 유지: delivery_dddress (delivery_address의 오타)
-  delivery_dddress: z.string().optional(),
+  delivery_address: z.string().optional(),
   // 사업자 정보
   reg_number: z.string().optional(),
   jumin_number: z.string().optional(),

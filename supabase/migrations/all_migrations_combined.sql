@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS store (
   review_count       integer NOT NULL DEFAULT 0,
   operation_hours    text,
   closed_days        text,
-  delivery_dddress   text,                          -- ERD 원본 오타 유지
+  delivery_address   text,
   reg_number         text NOT NULL,
   jumin_number       text NOT NULL,
   ceo_name           text NOT NULL,
