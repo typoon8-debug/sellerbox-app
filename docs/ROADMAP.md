@@ -87,7 +87,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
     - `inventory.ts` (inventory·inventory_txn)
     - `order.ts` (order·order_item)
     - `fulfillment.ts` (picking_task·picking_item·packing_task·label)
-    - `shipment.ts` (shipment·shipment_event·dispatch_request·store_quick_policy·store_quick_timeslot·store_quick_slot_usage)
+    - `shipment.ts` (shipment·shipment_event·dispatch_request·store_quick_policy·store_quick_time_slot·store_quick_slot_usage)
     - `promotion.ts` (promotion·promotion_item·coupon·coupon_issurance·coupon_redemption)
     - `advertisement.ts` (fp_ad_content·fp_ad_schedule·fp_ad_target·fp_ad_cap·fp_ad_log)
     - `support.ts` (cs_ticket·review·ceo_review)
@@ -203,7 +203,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
 
 - ✅ **Task 012: 매장 및 상품 관리 API 연동 (F001·F012·F013)** - 완료
   - `stores/page.tsx` 더미 데이터 → `store.actions.ts` 연동
-  - `stores/info/page.tsx` 각 탭 → `store-fulfillment`, `seller`, `store-quick-policy`, `store-quick-timeslot`, `store-quick-slot-usage` 액션 연동
+  - `stores/info/page.tsx` 각 탭 → `store-fulfillment`, `seller`, `store-quick-policy`, `store-quick-time-slot`, `store-quick-slot-usage` 액션 연동
   - `items/page.tsx` → `item.actions.ts` + `item-detail.actions.ts` 연동
   - 상품 이미지 업로드 → `lib/supabase/storage.ts` 유틸 신규 생성 → Supabase Storage bucket `items` 연동
   - 카테고리 필터·검색·정렬이 서버 페이지네이션으로 동작
@@ -369,7 +369,7 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - DDL 마이그레이션 SQL 6개 파일 작성 (`supabase/migrations/`)
     - `20260416000001_core_identity.sql` — tenant, users, seller, store, store_fulfillment, audit_log
     - `20260416000002_catalog_inventory.sql` — item, item_detail, inventory, inventory_txn
-    - `20260416000003_orders_fulfillment.sql` — order, order_item, picking_task, picking_item, packing_task, label, shipment, shipment_event, dispatch_request, store_quick_policy, store_quick_timeslot, store_quick_slot_usage
+    - `20260416000003_orders_fulfillment.sql` — order, order_item, picking_task, picking_item, packing_task, label, shipment, shipment_event, dispatch_request, store_quick_policy, store_quick_time_slot, store_quick_slot_usage
     - `20260416000004_promotion_coupon.sql` — promotion, promotion_item, coupon, coupon_issurance, coupon_redemption
     - `20260416000005_ads_support.sql` — fp_ad_content, fp_ad_schedule, fp_ad_target, fp_ad_cap, fp_ad_log, cs_ticket, review, ceo_review
     - `20260416000006_rls_policies.sql` — 35개 테이블 RLS 활성화 + authenticated/anon 정책
@@ -400,8 +400,8 @@ PRD: [`docs/PRD.md`](./PRD.md) · ERD: [`docs/erd/sellerbox-erd.csv`](./erd/sell
   - `lib/repositories/tenant.repository.ts` 신규: `BaseRepository<"tenant">` 상속, name·code ILIKE 검색
   - `lib/repositories/store.repository.ts`: `findByTenantId(tenantId)` 메서드 추가
   - `lib/schemas/domain/store.schema.ts`: `updateStoreSchema` 필드 확장 (포인트·배달시간·운영·사업자 등 16개 필드)
-  - 6개 Zod 스키마 신규: `tenant.schema.ts`, `seller.schema.ts`, `store-fulfillment.schema.ts`, `store-quick-policy.schema.ts`, `store-quick-timeslot.schema.ts`, `store-quick-slot-usage.schema.ts`
-  - 7개 Server Actions 신규: `tenant.actions.ts`, `seller.actions.ts`, `store-fulfillment.actions.ts`, `store-quick-policy.actions.ts`, `store-quick-timeslot.actions.ts`, `store-quick-slot-usage.actions.ts`, `store-query.actions.ts`
+  - 6개 Zod 스키마 신규: `tenant.schema.ts`, `seller.schema.ts`, `store-fulfillment.schema.ts`, `store-quick-policy.schema.ts`, `store-quick-time-slot.schema.ts`, `store-quick-slot-usage.schema.ts`
+  - 7개 Server Actions 신규: `tenant.actions.ts`, `seller.actions.ts`, `store-fulfillment.actions.ts`, `store-quick-policy.actions.ts`, `store-quick-time-slot.actions.ts`, `store-quick-slot-usage.actions.ts`, `store-query.actions.ts`
 
   #### Phase 2: 메뉴 구조 변경
   - `lib/navigation/menu-items.ts`: "가게 관리" 메뉴를 단일 leaf(`/stores`)로 변경 (기존 `stores-info` 서브메뉴 제거)
