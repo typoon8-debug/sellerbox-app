@@ -20,12 +20,12 @@ export type StoreQuickPolicyRow = Database["public"]["Tables"]["store_quick_poli
 export type StoreQuickPolicyInsert = Database["public"]["Tables"]["store_quick_policy"]["Insert"];
 export type StoreQuickPolicyUpdate = Database["public"]["Tables"]["store_quick_policy"]["Update"];
 
-// ─── 바로퀵 타임슬롯 ──────────────────────────────────────────────────────────
-export type StoreQuickTimeslotRow = Database["public"]["Tables"]["store_quick_timeslot"]["Row"];
+// ─── 바로퀵 고정 운행표 ────────────────────────────────────────────────────────
+export type StoreQuickTimeslotRow = Database["public"]["Tables"]["store_quick_time_slot"]["Row"];
 export type StoreQuickTimeslotInsert =
-  Database["public"]["Tables"]["store_quick_timeslot"]["Insert"];
+  Database["public"]["Tables"]["store_quick_time_slot"]["Insert"];
 export type StoreQuickTimeslotUpdate =
-  Database["public"]["Tables"]["store_quick_timeslot"]["Update"];
+  Database["public"]["Tables"]["store_quick_time_slot"]["Update"];
 
 // ─── 바로퀵 슬롯 사용량 ───────────────────────────────────────────────────────
 export type StoreQuickSlotUsageRow = Database["public"]["Tables"]["store_quick_slot_usage"]["Row"];

@@ -34,21 +34,19 @@ import {
 } from "@/lib/actions/domain/store-quick-timeslot.actions";
 import type { Database } from "@/lib/supabase/database.types";
 
-type StoreQuickTimeslotRow = Database["public"]["Tables"]["store_quick_timeslot"]["Row"];
+type StoreQuickTimeslotRow = Database["public"]["Tables"]["store_quick_time_slot"]["Row"];
+
+const DAY_TYPE_OPTIONS = [
+  { value: "ALL", label: "전체" },
+  { value: "WEEKDAY", label: "평일" },
+  { value: "WEEKEND", label: "주말" },
+] as const;
 
 const timeslotFormSchema = z.object({
-  label: z.string().min(1, "라벨을 입력하세요"),
-  depart_time: z.string().min(1, "출발 시간을 입력하세요"),
-  order_cutoff_min: z.number().int().min(0),
-  dow_mask: z.string().optional(),
+  depart_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "HH:MM 형식으로 입력하세요"),
+  day_type: z.string().min(1),
   status: z.enum(["ACTIVE", "INACTIVE"]),
 });
-
-function numOnChange(fieldOnChange: (v: number) => void) {
-  return (e: React.ChangeEvent<HTMLInputElement>) => {
-    fieldOnChange(e.target.valueAsNumber);
-  };
-}
 
 type TimeslotFormValues = z.infer<typeof timeslotFormSchema>;
 
@@ -66,23 +64,24 @@ export function TimeslotTab({ storeId, timeslots, onDataChange }: TimeslotTabPro
   const form = useForm<TimeslotFormValues>({
     resolver: zodResolver(timeslotFormSchema),
     defaultValues: {
-      label: "",
       depart_time: "",
-      order_cutoff_min: 30,
-      dow_mask: "",
+      day_type: "ALL",
       status: "ACTIVE",
     },
   });
 
   const columns: DataTableColumn<StoreQuickTimeslotRow>[] = [
-    { key: "label", header: "라벨" },
-    { key: "depart_time", header: "출발 시간" },
     {
-      key: "order_cutoff_min",
-      header: "주문 마감(분 전)",
-      render: (row) => `${row.order_cutoff_min}분`,
+      key: "depart_time",
+      header: "출발 시간",
+      render: (row) => (row.depart_time as string).slice(0, 5),
     },
-    { key: "dow_mask", header: "운행 요일", render: (row) => row.dow_mask ?? "-" },
+    {
+      key: "day_type",
+      header: "운행 요일",
+      render: (row) =>
+        DAY_TYPE_OPTIONS.find((o) => o.value === row.day_type)?.label ?? row.day_type ?? "-",
+    },
     {
       key: "status",
       header: "상태",
@@ -93,22 +92,14 @@ export function TimeslotTab({ storeId, timeslots, onDataChange }: TimeslotTabPro
   ];
 
   const openRegister = () => {
-    form.reset({
-      label: "",
-      depart_time: "",
-      order_cutoff_min: 30,
-      dow_mask: "",
-      status: "ACTIVE",
-    });
+    form.reset({ depart_time: "", day_type: "ALL", status: "ACTIVE" });
     setRegisterOpen(true);
   };
 
   const openEdit = (row: StoreQuickTimeslotRow) => {
     form.reset({
-      label: row.label ?? "",
-      depart_time: row.depart_time ?? "",
-      order_cutoff_min: row.order_cutoff_min,
-      dow_mask: row.dow_mask ?? "",
+      depart_time: (row.depart_time as string).slice(0, 5),
+      day_type: row.day_type ?? "ALL",
       status: (row.status as "ACTIVE" | "INACTIVE") ?? "ACTIVE",
     });
     setEditTarget(row);
@@ -116,7 +107,7 @@ export function TimeslotTab({ storeId, timeslots, onDataChange }: TimeslotTabPro
 
   const handleSubmit = async (values: TimeslotFormValues) => {
     if (editTarget) {
-      const result = await updateQuickTimeslot({ slot_id: editTarget.slot_id, ...values });
+      const result = await updateQuickTimeslot({ schedule_id: editTarget.schedule_id, ...values });
       if (!result.ok) {
         toast.error(result.error.message);
         return;
@@ -124,7 +115,7 @@ export function TimeslotTab({ storeId, timeslots, onDataChange }: TimeslotTabPro
       toast.success("운행표가 수정되었습니다.");
       onDataChange(
         timeslots.map((t) =>
-          t.slot_id === editTarget.slot_id ? (result.data as StoreQuickTimeslotRow) : t
+          t.schedule_id === editTarget.schedule_id ? (result.data as StoreQuickTimeslotRow) : t
         )
       );
       setEditTarget(null);
@@ -143,14 +134,14 @@ export function TimeslotTab({ storeId, timeslots, onDataChange }: TimeslotTabPro
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    const result = await deleteQuickTimeslot({ slot_id: deleteTarget.slot_id });
+    const result = await deleteQuickTimeslot({ schedule_id: deleteTarget.schedule_id });
     if (!result.ok) {
       toast.error(result.error.message);
       setDeleteTarget(null);
       return;
     }
     toast.success("운행표가 삭제되었습니다.");
-    onDataChange(timeslots.filter((t) => t.slot_id !== deleteTarget.slot_id));
+    onDataChange(timeslots.filter((t) => t.schedule_id !== deleteTarget.schedule_id));
     setDeleteTarget(null);
   };
 
@@ -161,7 +152,7 @@ export function TimeslotTab({ storeId, timeslots, onDataChange }: TimeslotTabPro
       <DataTable
         columns={columns}
         data={timeslots}
-        rowKey={(row) => row.slot_id}
+        rowKey={(row) => row.schedule_id}
         toolbarActions={
           <Button size="sm" variant="outline-gray" onClick={openRegister}>
             <Plus className="mr-1 h-3.5 w-3.5" />
@@ -190,25 +181,12 @@ export function TimeslotTab({ storeId, timeslots, onDataChange }: TimeslotTabPro
           <form className="space-y-4 p-4">
             <FormField
               control={form.control}
-              name="label"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>라벨 *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="예: 1차 배송" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="depart_time"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>출발 시간 *</FormLabel>
                   <FormControl>
-                    <Input placeholder="예: 10:00" {...field} />
+                    <Input type="time" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -216,31 +194,24 @@ export function TimeslotTab({ storeId, timeslots, onDataChange }: TimeslotTabPro
             />
             <FormField
               control={form.control}
-              name="order_cutoff_min"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>주문 마감(분 전) *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      value={field.value}
-                      onBlur={field.onBlur}
-                      onChange={numOnChange(field.onChange)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="dow_mask"
+              name="day_type"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>운행 요일</FormLabel>
-                  <FormControl>
-                    <Input placeholder="예: 1111100 (월~금)" {...field} />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {DAY_TYPE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -274,7 +245,7 @@ export function TimeslotTab({ storeId, timeslots, onDataChange }: TimeslotTabPro
         open={deleteTarget !== null}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="운행표 삭제"
-        description={`'${deleteTarget?.label}' 운행표를 삭제하시겠습니까?`}
+        description={`출발 ${(deleteTarget?.depart_time as string | null)?.slice(0, 5) ?? ""} 운행표를 삭제하시겠습니까?`}
         onConfirm={handleDelete}
       />
     </div>

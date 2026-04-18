@@ -10,7 +10,7 @@ import type { StoreFulfillmentRow, SellerRow } from "@/lib/types/domain/store";
 import type { Database } from "@/lib/supabase/database.types";
 
 type StoreQuickPolicyRow = Database["public"]["Tables"]["store_quick_policy"]["Row"];
-type StoreQuickTimeslotRow = Database["public"]["Tables"]["store_quick_timeslot"]["Row"];
+type StoreQuickTimeslotRow = Database["public"]["Tables"]["store_quick_time_slot"]["Row"];
 type StoreQuickSlotUsageRow = Database["public"]["Tables"]["store_quick_slot_usage"]["Row"];
 
 export interface StoreTabData {

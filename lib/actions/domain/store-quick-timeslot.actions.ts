@@ -9,7 +9,7 @@ import {
   deleteQuickTimeslotSchema,
 } from "@/lib/schemas/domain/store-quick-timeslot.schema";
 
-/** 운행 시간표(타임슬롯) 생성 */
+/** 바로퀵 고정 운행표 생성 */
 export const createQuickTimeslot = withAction(
   createQuickTimeslotSchema,
   async (input) => {
@@ -20,25 +20,25 @@ export const createQuickTimeslot = withAction(
   { action: "CREATE", resource: "STORE_QUICK_TIMESLOT" }
 );
 
-/** 운행 시간표(타임슬롯) 수정 */
+/** 바로퀵 고정 운행표 수정 */
 export const updateQuickTimeslot = withAction(
   updateQuickTimeslotSchema,
-  async ({ slot_id, ...rest }) => {
+  async ({ schedule_id, ...rest }) => {
     const supabase = createAdminClient();
     const repo = new StoreQuickTimeslotRepository(supabase);
-    return repo.update(slot_id, rest);
+    return repo.update(schedule_id, rest);
   },
   { action: "UPDATE", resource: "STORE_QUICK_TIMESLOT" }
 );
 
-/** 운행 시간표(타임슬롯) 삭제 */
+/** 바로퀵 고정 운행표 삭제 */
 export const deleteQuickTimeslot = withAction(
   deleteQuickTimeslotSchema,
-  async ({ slot_id }) => {
+  async ({ schedule_id }) => {
     const supabase = createAdminClient();
     const repo = new StoreQuickTimeslotRepository(supabase);
-    await repo.delete(slot_id);
-    return { slot_id };
+    await repo.delete(schedule_id);
+    return { schedule_id };
   },
   { action: "DELETE", resource: "STORE_QUICK_TIMESLOT" }
 );
