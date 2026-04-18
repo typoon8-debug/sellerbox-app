@@ -25,7 +25,8 @@ import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
 import { PriceDisplay } from "@/components/admin/domain/price-display";
-import { CategorySelect, ITEM_CATEGORIES } from "@/components/admin/domain/category-select";
+import { CategorySelect } from "@/components/admin/domain/category-select";
+import { useCategoryOptions } from "@/lib/hooks/use-category-options";
 import { QueryField } from "@/components/admin/query-field";
 import { QueryActions } from "@/components/admin/query-actions";
 import {
@@ -69,7 +70,7 @@ type EditedField = {
 };
 
 interface InventoryMgmtClientProps {
-  stores: { store_id: string; name: string }[];
+  stores: { store_id: string; name: string; tenant_code: string }[];
 }
 
 /** 재고 row를 편의 필드 포함 형태로 정규화 */
@@ -123,6 +124,11 @@ export function InventoryMgmtClient({ stores }: InventoryMgmtClientProps) {
   const [selectedStoreId, setSelectedStoreId] = useState(stores[0]?.store_id ?? "");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [itemNameSearch, setItemNameSearch] = useState("");
+
+  const selectedStore = stores.find((s) => s.store_id === selectedStoreId);
+  const { categories, loading: categoriesLoading } = useCategoryOptions(
+    selectedStore?.tenant_code ?? null
+  );
 
   // ─── Panel 1: 상품 목록 ─────────────────────────────────────────────────────
   const [items, setItems] = useState<ItemRow[]>([]);
@@ -485,7 +491,12 @@ export function InventoryMgmtClient({ stores }: InventoryMgmtClientProps) {
           ) : (
             <Select
               value={selectedStoreId}
-              onValueChange={(v) => withUnsavedGuard(() => setSelectedStoreId(v))}
+              onValueChange={(v) =>
+                withUnsavedGuard(() => {
+                  setSelectedStoreId(v);
+                  setCategoryFilter("ALL");
+                })
+              }
             >
               <SelectTrigger className="h-9 min-w-[180px]">
                 <SelectValue />
@@ -506,8 +517,9 @@ export function InventoryMgmtClient({ stores }: InventoryMgmtClientProps) {
           <CategorySelect
             value={categoryFilter}
             onValueChange={setCategoryFilter}
-            categories={ITEM_CATEGORIES}
+            categories={categories}
             placeholder="전체"
+            disabled={categoriesLoading}
             className="h-9 min-w-[140px]"
           />
         </QueryField>

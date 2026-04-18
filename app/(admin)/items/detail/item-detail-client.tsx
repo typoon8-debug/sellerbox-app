@@ -27,7 +27,8 @@ import { DataTable, type DataTableColumn } from "@/components/admin/data-table";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
 import { PriceDisplay } from "@/components/admin/domain/price-display";
-import { CategorySelect, ITEM_CATEGORIES } from "@/components/admin/domain/category-select";
+import { CategorySelect } from "@/components/admin/domain/category-select";
+import { useCategoryOptions } from "@/lib/hooks/use-category-options";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { QueryField } from "@/components/admin/query-field";
 import { QueryActions } from "@/components/admin/query-actions";
@@ -69,12 +70,17 @@ const itemColumns: DataTableColumn<ItemRow>[] = [
 ];
 
 interface ItemDetailManageClientProps {
-  stores: { store_id: string; name: string }[];
+  stores: { store_id: string; name: string; tenant_code: string }[];
 }
 
 export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) {
   const [selectedStoreId, setSelectedStoreId] = useState(stores[0]?.store_id ?? "");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+
+  const selectedStore = stores.find((s) => s.store_id === selectedStoreId);
+  const { categories, loading: categoriesLoading } = useCategoryOptions(
+    selectedStore?.tenant_code ?? null
+  );
   const [items, setItems] = useState<ItemRow[]>([]);
   const [selectedItem, setSelectedItem] = useState<ItemRow | null>(null);
   const [currentDetail, setCurrentDetail] = useState<ItemDetailRow | null>(null);
@@ -266,7 +272,13 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
       <div className="border-separator border-b p-4">
         <div className="flex flex-wrap items-end gap-3">
           <QueryField label="가게명" required>
-            <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+            <Select
+              value={selectedStoreId}
+              onValueChange={(value) => {
+                setSelectedStoreId(value);
+                setCategoryFilter("ALL");
+              }}
+            >
               <SelectTrigger className="w-52">
                 <SelectValue placeholder="가게 선택" />
               </SelectTrigger>
@@ -283,7 +295,8 @@ export function ItemDetailManageClient({ stores }: ItemDetailManageClientProps) 
             <CategorySelect
               value={categoryFilter}
               onValueChange={setCategoryFilter}
-              categories={ITEM_CATEGORIES}
+              categories={categories}
+              disabled={categoriesLoading}
               placeholder="전체"
             />
           </QueryField>

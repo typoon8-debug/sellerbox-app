@@ -16,8 +16,8 @@ export default async function ItemDetailPage() {
 
   const adminSupabase = createAdminClient();
 
-  // 로그인한 seller의 소속 가게 목록 조회 (OWNER는 복수 가게 운영 가능)
-  let stores: { store_id: string; name: string }[] = [];
+  // 로그인한 seller의 소속 가게 목록 조회 (tenant_code 포함 — 카테고리 동적 로드용)
+  let stores: { store_id: string; name: string; tenant_code: string }[] = [];
   if (user?.email) {
     const sellerRepo = new SellerRepository(adminSupabase);
     const sellers = await sellerRepo.findByEmail(user.email);
@@ -26,10 +26,23 @@ export default async function ItemDetailPage() {
     if (storeIds.length > 0) {
       const { data: storeRows } = await adminSupabase
         .from("store")
-        .select("store_id, name")
+        .select("store_id, name, tenant_id")
         .in("store_id", storeIds)
         .order("name", { ascending: true });
-      stores = (storeRows ?? []) as { store_id: string; name: string }[];
+
+      const tenantIds = [...new Set((storeRows ?? []).map((s) => s.tenant_id))];
+      const { data: tenantRows } = await adminSupabase
+        .from("tenant")
+        .select("tenant_id, code")
+        .in("tenant_id", tenantIds);
+
+      const tenantMap = new Map((tenantRows ?? []).map((t) => [t.tenant_id, t.code]));
+
+      stores = (storeRows ?? []).map((s) => ({
+        store_id: s.store_id,
+        name: s.name,
+        tenant_code: tenantMap.get(s.tenant_id) ?? "",
+      }));
     }
   }
 

@@ -43,9 +43,9 @@ const itemColumns: DataTableColumn<ItemRow>[] = [
   },
   { key: "name", header: "상품명" },
   {
-    key: "category_code_value",
+    key: "category_name",
     header: "카테고리",
-    render: (row) => row.category_code_value ?? "-",
+    render: (row) => row.category_name ?? "-",
   },
   {
     key: "sale_price",
