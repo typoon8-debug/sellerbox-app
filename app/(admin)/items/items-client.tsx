@@ -28,11 +28,12 @@ import { LayerDialog } from "@/components/admin/layer-dialog";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { DomainBadge } from "@/components/admin/domain/status-badge-map";
 import { PriceDisplay } from "@/components/admin/domain/price-display";
-import { CategorySelect, ITEM_CATEGORIES } from "@/components/admin/domain/category-select";
+import { CategorySelect } from "@/components/admin/domain/category-select";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { QueryField } from "@/components/admin/query-field";
 import { QueryActions } from "@/components/admin/query-actions";
 import { createItem, updateItem, deleteItem } from "@/lib/actions/domain/item.actions";
+import { useCategoryOptions } from "@/lib/hooks/use-category-options";
 import type { ItemRow } from "@/lib/types/domain/item";
 import type { PaginatedResult } from "@/lib/types/api";
 import { Plus } from "lucide-react";
@@ -67,7 +68,7 @@ const columns: DataTableColumn<ItemRow>[] = [
 
 interface ItemsClientProps {
   initialData: PaginatedResult<ItemRow>;
-  stores: { store_id: string; name: string }[];
+  stores: { store_id: string; name: string; tenant_code: string }[];
   initialStoreId: string;
 }
 
@@ -75,6 +76,12 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
   const router = useRouter();
   const [selectedStoreId, setSelectedStoreId] = useState(initialStoreId);
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+
+  // 선택된 가게의 tenant.code → common_code 기반 카테고리 동적 조회
+  const selectedStore = stores.find((s) => s.store_id === selectedStoreId);
+  const { categories, loading: categoriesLoading } = useCategoryOptions(
+    selectedStore?.tenant_code ?? null
+  );
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ItemRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ItemRow | null>(null);
@@ -152,7 +159,7 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
         sku: `SKU-${Date.now()}`,
         category_code_value: values.category_code_value,
         category_name:
-          ITEM_CATEGORIES.find((c) => c.value === values.category_code_value)?.label ??
+          categories.find((c) => c.value === values.category_code_value)?.label ??
           values.category_code_value,
         name: values.name,
         list_price: values.list_price,
@@ -194,7 +201,10 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
           <QueryField label="가게명" required>
             <Select
               value={selectedStoreId}
-              onValueChange={setSelectedStoreId}
+              onValueChange={(value) => {
+                setSelectedStoreId(value);
+                setCategoryFilter("ALL");
+              }}
               disabled={stores.length === 0}
             >
               <SelectTrigger className="w-52">
@@ -213,8 +223,9 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
             <CategorySelect
               value={categoryFilter}
               onValueChange={setCategoryFilter}
-              categories={ITEM_CATEGORIES}
+              categories={categories}
               placeholder="전체"
+              disabled={categoriesLoading}
             />
           </QueryField>
           <QueryActions onSearch={handleSearch} onReset={handleReset} />
@@ -299,18 +310,30 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>카테고리 *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={categoriesLoading}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="카테고리 선택" />
+                        <SelectValue
+                          placeholder={categoriesLoading ? "불러오는 중..." : "카테고리 선택"}
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {ITEM_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
-                      ))}
+                      {categories.length === 0 ? (
+                        <div className="text-muted-foreground py-2 text-center text-sm">
+                          카테고리가 설정되지 않았습니다
+                        </div>
+                      ) : (
+                        categories.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />

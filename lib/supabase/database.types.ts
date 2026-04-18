@@ -130,7 +130,7 @@ export type Database = {
           review_count: number;
           operation_hours: string | null;
           closed_days: string | null;
-          delivery_dddress: string | null;
+          delivery_address: string | null;
           reg_number: string;
           jumin_number: string;
           ceo_name: string;
@@ -168,7 +168,7 @@ export type Database = {
           review_count?: number;
           operation_hours?: string | null;
           closed_days?: string | null;
-          delivery_dddress?: string | null;
+          delivery_address?: string | null;
           reg_number: string;
           jumin_number: string;
           ceo_name: string;
@@ -206,7 +206,7 @@ export type Database = {
           review_count?: number;
           operation_hours?: string | null;
           closed_days?: string | null;
-          delivery_dddress?: string | null;
+          delivery_address?: string | null;
           reg_number?: string;
           jumin_number?: string;
           ceo_name?: string;
@@ -1600,6 +1600,61 @@ export type Database = {
           created_at?: string;
           modified_at?: string;
           status?: "VISIBLE" | "HIDDEN" | "REPORTED" | "DELETED";
+        };
+        Relationships: [];
+      };
+
+      // ─── 공통코드 ─────────────────────────────────────────────────
+      common_code: {
+        Row: {
+          id: string;
+          code: string;
+          name: string;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          name: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          name?: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      // ─── 공통코드 값 ──────────────────────────────────────────────
+      common_code_value: {
+        Row: {
+          id: string;
+          common_code_id: string;
+          value: string;
+          label: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          common_code_id: string;
+          value: string;
+          label: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          common_code_id?: string;
+          value?: string;
+          label?: string;
+          sort_order?: number;
+          created_at?: string;
         };
         Relationships: [];
       };

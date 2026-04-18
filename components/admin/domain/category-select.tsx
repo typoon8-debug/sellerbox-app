@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-// ─── 더미 카테고리 데이터 ─────────────────────────────────────────────────────
+export type CategoryOption = { value: string; label: string };
+
+// ─── 더미 카테고리 데이터 (레거시 하드코딩 — 점진적으로 common_code DB로 대체) ──
 export const STORE_CATEGORIES = [
   { value: "KOREAN", label: "한식" },
   { value: "CHINESE", label: "중식" },
@@ -39,7 +41,7 @@ export const ITEM_CATEGORIES = [
 interface CategorySelectProps {
   value: string;
   onValueChange: (value: string) => void;
-  categories?: { value: string; label: string }[];
+  categories?: CategoryOption[];
   placeholder?: string;
   allLabel?: string;
   disabled?: boolean;
