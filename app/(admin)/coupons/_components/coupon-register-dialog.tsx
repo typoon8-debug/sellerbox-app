@@ -85,8 +85,8 @@ export function CouponRegisterDialog({
     if (editTarget) {
       form.reset({
         name: editTarget.name,
-        coupon_type: editTarget.coupon_type,
-        discount_unit: editTarget.discount_unit,
+        coupon_type: editTarget.coupon_type as FormValues["coupon_type"],
+        discount_unit: editTarget.discount_unit as FormValues["discount_unit"],
         discount_value: editTarget.discount_value,
         shipping_max_free: editTarget.shipping_max_free ?? 0,
         min_order_amount: editTarget.min_order_amount ?? 0,
@@ -95,7 +95,7 @@ export function CouponRegisterDialog({
         total_issuable: editTarget.total_issuable ?? 100,
         per_customer_limit: editTarget.per_customer_limit ?? 1,
         stackable: (editTarget.stackable ?? 0) === 1,
-        status: editTarget.status ?? "ISSUED",
+        status: editTarget.status as FormValues["status"],
       });
     } else {
       form.reset({

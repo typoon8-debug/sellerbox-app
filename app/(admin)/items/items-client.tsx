@@ -130,7 +130,7 @@ export function ItemsClient({ initialData, stores, initialStoreId }: ItemsClient
       category_code_value: row.category_code_value ?? "",
       list_price: row.list_price ?? 0,
       sale_price: row.sale_price ?? 0,
-      status: row.status ?? "ACTIVE",
+      status: (row.status ?? "ACTIVE") as ItemFormValues["status"],
       item_picture_url: row.item_picture_url ?? null,
     });
     setEditTarget(row);

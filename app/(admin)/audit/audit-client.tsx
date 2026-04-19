@@ -126,7 +126,7 @@ export function AuditClient({ initialData, initialSearch }: AuditClientProps) {
       <DataTable<AuditLogRow>
         data={initialData.data}
         columns={columns}
-        rowKey={(row) => String(row.id)}
+        rowKey={(row) => String(row.log_id)}
         pagination={{
           page: initialData.page,
           pageSize: initialData.pageSize,

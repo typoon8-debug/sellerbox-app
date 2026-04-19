@@ -33,7 +33,7 @@ export async function getMyProfile(): Promise<UserProfile | null> {
     email: data.email,
     name: data.name,
     phone: data.phone,
-    role: data.role,
+    role: data.role as UserProfile["role"],
   };
 }
 

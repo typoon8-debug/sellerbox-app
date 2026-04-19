@@ -135,7 +135,7 @@ export function TargetTab({ contentId, storeId, targets, caps, onDataChange }: T
 
   const openEdit = (row: TargetWithCap) => {
     form.reset({
-      os: row.os ?? null,
+      os: (row.os ?? null) as FormValues["os"],
       app_version_min: row.app_version_min ?? "",
       region: row.region ?? "",
       locale: row.locale ?? "",

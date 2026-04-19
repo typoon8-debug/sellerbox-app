@@ -93,12 +93,12 @@ export function PromotionRegisterDialog({
     if (editTarget) {
       form.reset({
         name: editTarget.name,
-        type: editTarget.type,
-        discount_unit: editTarget.discount_unit ?? null,
+        type: editTarget.type as FormValues["type"],
+        discount_unit: editTarget.discount_unit as FormValues["discount_unit"],
         discount_value: editTarget.discount_value ?? null,
         start_at: editTarget.start_at?.slice(0, 10) ?? "",
         end_at: editTarget.end_at?.slice(0, 10) ?? "",
-        status: editTarget.status,
+        status: editTarget.status as FormValues["status"],
         priority: editTarget.priority ?? 0,
         max_usage: editTarget.max_usage ?? null,
         per_user_limit: editTarget.per_user_limit ?? null,

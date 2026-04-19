@@ -93,7 +93,7 @@ export function ContentRegisterDialog({
         click_url: editTarget.click_url ?? "",
         ad_image: editTarget.ad_image ?? null,
         ad_image_type: "type1",
-        status: editTarget.status,
+        status: editTarget.status as FormValues["status"],
         priority: editTarget.priority,
       });
     } else {
