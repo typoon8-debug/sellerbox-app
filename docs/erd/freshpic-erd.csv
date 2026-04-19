@@ -1,0 +1,112 @@
+구분,테이블명(영문),테이블명(한글),SEQ,컬럼명(영문),컬럼명(한글),NN,데이터 타입,길이,PK,FK,인덱스,기본값,제약조건,컬럼설명
+FP,customer,회원,1 ,customer_id,고객ID,Y,CHAR,36,PK,,,,,UUID
+FP,customer,회원,2 ,email,이메일,Y,VARCHAR,100,,,,UNIQUE,,로그인ID
+FP,customer,회원,3 ,password_hash,비밀번호,Y,VARCHAR,255,,,,,,암호화저장
+FP,customer,회원,4 ,name,이름,Y,VARCHAR,50,,,,,,고객명
+FP,customer,회원,5 ,phone,휴대폰번호,Y,VARCHAR,20,,,,UNIQUE,,인증된번호
+FP,customer,회원,6 ,birthdate,생년월일,N,DATE,,,,,,,선택입력
+FP,customer,회원,7 ,job,직업,N,VARCHAR,20,,,,,,"전업주부, 회사원, 자영업, 기타"
+FP,customer,회원,8 ,gender,성별,N,ENUM,-,,,,,,"'M','F','O'"
+FP,customer,회원,9 ,grade,회원등급,Y,ENUM,-,,,,BRONZE,,"('BRONZE','SILVER','GOLD','VIP','ADMIN')"
+FP,customer,회원,10 ,role,권한,Y,ENUM,-,,,,CUSTOMER,,"('CUSTOMER','SELLER','RIDER','ADMIN')"
+FP,customer,회원,11 ,zipcode,우편번호,N,VARCHAR,10,,,,,,
+FP,customer,회원,12 ,sido,시도,N,VARCHAR,50,,,,,,
+FP,customer,회원,13 ,sigungu,시군구,N,VARCHAR,50,,,,,,
+FP,customer,회원,14 ,eupmyeondong,읍면동,N,VARCHAR,50,,,,,,
+FP,customer,회원,15 ,road_name,도로명,N,VARCHAR,100,,,,,,
+FP,customer,회원,16 ,building_no,건물번호,N,VARCHAR,20,,,,,,
+FP,customer,회원,17 ,building_name,건물명,N,VARCHAR,100,,,,,,
+FP,customer,회원,18 ,detail_address,상세주소,N,VARCHAR,100,,,,,,
+FP,customer,회원,21 ,store_id,가게ID,N,CHAR,36,,,,,,"현재 가게ID, 메인화면에서 슈퍼변경"
+FP,customer,회원,22 ,marketing_optin,마케팅수신동의,Y,BOOLEAN,,,,,,,TRUE=동의
+FP,customer,회원,23 ,privacy_consent,개인정보동의,Y,BOOLEAN,,,,,,,TRUE=동의
+FP,customer,회원,24 ,location_consent,위치정보동의,Y,BOOLEAN,,,,,,,TRUE=동의
+FP,customer,회원,25 ,status,회원상태,Y,ENUM,-,,,,,,"ACTIVE(활성), INACTIVE(비활성), BLOCKED(차단), DELETED(탈퇴)"
+FP,customer,회원,26 ,created_at,가입일,Y,DATETIME,,,,,,,
+FP,customer,회원,27 ,modified_at,수정일,N,DATETIME,,,,,,,
+FP,customer_shop,회원가게,1 ,customer_id,회원ID,Y,CHAR,36,PK,FK,,UUID(),,
+FP,customer_shop,회원가게,2 ,store_id,가게ID,Y,CHAR,36,PK,FK,,UUID(),,
+FP,customer_shop,회원가게,3 ,point_balance,포인트잔액,Y,INT,,,,,,,현재 가용 포인트
+FP,customer_shop,회원가게,4 ,point_pending,보류포인트,Y,INT,,,,,,,결제 전표확정 대기
+FP,customer_shop,회원가게,5 ,created_at,생성일,Y,DATETIME,8,,,,,,
+FP,customer_shop,회원가게,6 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+FP,customer_shop,회원가게,7 ,status,상태,Y,ENUM,2,,,,,,"ACTIVE(정상), LEFT(탈퇴), BANNED(제한), PENDING(승인대기)"
+FP,address,회원주소,1 ,address_id,주소ID,Y,CHAR,36,PK,,,UUID(),,
+FP,address,회원주소,2 ,customer_id,회원ID,Y,CHAR,36,PK,FK,,,,
+FP,address,회원주소,3 ,address_name,주소명,Y,VARCHAR,255,,,,,,"우리집, 사무실,…"
+FP,address,회원주소,4 ,address,회원주소,Y,VARCHAR,255,,,,,,
+FP,address,회원주소,5 ,message,배송메세지,Y,VARCHAR,255,,,,,,"문 앞에 두고 벨 눌러주세요,  …"
+FP,address,회원주소,6 ,created_at,생성일,Y,DATETIME,8,,,,,,
+FP,address,회원주소,7 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+FP,address,회원주소,8 ,status,상태,Y,ENUM,2,,,,,,"ACTIVE(사용), INACTIVE(미사용), DEFAULT(기본배송지)"
+FP,wishlist,찜,1 ,store_id,가게ID,Y,CHAR,36,PK,FK,,,,
+FP,wishlist,찜,2 ,customer_id,회원ID,Y,CHAR,36,PK,FK,,,,
+FP,wishlist,찜,3 ,item_id,상품ID,Y,CHAR,36,PK,,,,,
+FP,wishlist,찜,4 ,quantity,수량,Y,INT,4,,,,,,
+FP,wishlist,찜,5 ,created_at,생성일,Y,DATETIME,8,,,,,,
+FP,wishlist,찜,6 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+FP,wishlist,찜,7 ,status,상태,Y,ENUM,2,,,,,,"ACTIVE(유효), REMOVED(삭제됨)"
+FP,cart,장바구니,1 ,cartId,장바구니ID,Y,CHAR,36,PK,,,UUID(),,
+FP,cart,장바구니,2 ,store_id,가게ID,Y,CHAR,36,PK,FK,,,,
+FP,cart,장바구니,3 ,customer_id,회원ID,Y,CHAR,36,PK,FK,,,,
+FP,cart,장바구니,4 ,item_id,상품ID,Y,CHAR,36,PK,FK,,,,
+FP,cart,장바구니,5 ,item_option_id,상품옵션ID,N,CHAR,36,,,,,,
+FP,cart,장바구니,6 ,order_id,주문ID,N,CHAR,36,,,,,,
+FP,cart,장바구니,7 ,quantity,수량,Y,INT,4,,,,,,
+FP,cart,장바구니,8 ,created_at,생성일,Y,DATETIME,8,,,,,,
+FP,cart,장바구니,9 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+FP,cart,장바구니,10 ,status,상태,Y,ENUM,2,,,,,,"ACTIVE(진행중), ORDERED(주문완료), ABANDONED(포기됨)"
+FP,memo,장보기메모,1 ,memo_id,메모ID,Y,CHAR,36,PK,,,UUID(),,
+FP,memo,장보기메모,2 ,customer_id,고객ID,Y,CHAR,36,PK,FK,,,,FK(customers)
+FP,memo,장보기메모,3 ,title,제목,N,VARCHAR,120,,,,,,
+FP,memo,장보기메모,4 ,note,메모본문,N,TEXT,,,,,,,자유기술
+FP,memo,장보기메모,5 ,status,상태,Y,ENUM,2,,,,,,"ACTIVE, ARCHIVED, DELETED"
+FP,memo,장보기메모,6 ,pinned,고정,Y,TINYINT,1,,,,,,1=상단고정
+FP,memo,장보기메모,7 ,ai_context,AI컨텍스트,N,JSON,8,,,,,,프롬프트/컨텍스트 스냅샷
+FP,memo,장보기메모,8 ,created_at,생성,Y,DATETIME,8,,,,,,item_id를 csv 형태로 저장
+FP,memo,장보기메모,9 ,updated_at,수정,Y,DATETIME,8,,,,,,
+FP,memo,장보기메모,10 ,modified_at,수정일,Y,DATETIME,8,,,,,,
+FP,memo_item,장보기항목,1 ,memo_item_id,항목ID,Y,CHAR,36,PK,,,UUID(),,
+FP,memo_item,장보기항목,2 ,memo_id,메모ID,Y,CHAR,36,,FK,,,,FK(memo)
+FP,memo_item,장보기항목,3 ,raw_text,원문,Y,VARCHAR,200,,,,,,사용자가 입력
+FP,memo_item,장보기항목,4 ,qty,수량,N,VARCHAR,40,,,,,,"“2개, 500g” 등"
+FP,memo_item,장보기항목,5 ,note,비고,N,VARCHAR,200,,,,,,
+FP,memo_item,장보기항목,6 ,status,상태,Y,ENUM,2,,,,,,"OPEN, MATCHED, ADDED_TO_CART, DONE, REMOVED"
+FP,memo_item,장보기항목,7 ,matched_item_id,매칭상품ID,N,CHAR,36,,FK,,,,FK(item)
+FP,memo_item,장보기항목,8 ,matched_score,매칭점수,N,"DECIMAL(5,2)",,,FK,,,,0?100
+FP,memo_item,장보기항목,9 ,matched_payload,매칭메타,N,JSON,,,FK,,,,"후보 리스트, 토큰 등"
+FP,memo_item,장보기항목,10 ,created_at,생성,Y,DATETIME,8,,,,,,
+FP,memo_item,장보기항목,11 ,updated_at,수정,Y,DATETIME,8,,,,,,
+FP,memo_recipe,요리마스터,1 ,recipe_id,레시피ID,Y,CHAR,36,PK,,,,,PK
+FP,memo_recipe,요리마스터,2 ,memo_id,메모ID,Y,CHAR,36,,FK,,,,FK(memo)
+FP,memo_recipe,요리마스터,3 ,title,요리명,Y,VARCHAR,120,,,,,,
+FP,memo_recipe,요리마스터,4 ,servings,인분,N,INT,,,,,,,
+FP,memo_recipe,요리마스터,5 ,cook_time_min,조리시간(분),N,INT,,,,,,,
+FP,memo_recipe,요리마스터,6 ,source,출처,N,VARCHAR,120,,,,,,모델/링크 요약
+FP,memo_recipe,요리마스터,7 ,status,상태,Y,ENUM,2,,,,,,"DRAFT, GENERATED, EDITED, ARCHIVED"
+FP,memo_recipe,요리마스터,8 ,steps_json,단계JSON,N,JSON,,,,,,,"[{order, text}]"
+FP,memo_recipe,요리마스터,9 ,created_at,생성,Y,DATETIME,8,,,,,,
+FP,memo_recipe,요리마스터,10 ,updated_at,수정,Y,DATETIME,8,,,,,,
+FP,memo_recipe_ingredient,요리재료,1 ,ingredient_id,재료ID,Y,CHAR,36,PK,,,,,
+FP,memo_recipe_ingredient,요리재료,2 ,recipe_id,레시피ID,Y,CHAR,36,,,,,,FK(memo_recipe)
+FP,memo_recipe_ingredient,요리재료,3 ,name_raw,재료명원문,Y,VARCHAR,120,,,,,,
+FP,memo_recipe_ingredient,요리재료,4 ,qty_text,분량텍스트,N,VARCHAR,60,,,,,,"예: 200g, 1T"
+FP,memo_recipe_ingredient,요리재료,5 ,optional,선택재료여부,Y,TINYINT(1),1,,,,,,
+FP,memo_recipe_ingredient,요리재료,6 ,status,상태,Y,ENUM,2,,,,,,"OPEN, MATCHED, REMOVED"
+FP,memo_recipe_ingredient,요리재료,7 ,matched_item_id,매칭상품ID,N,CHAR,36,,FK,,,,FK(item)
+FP,memo_recipe_ingredient,요리재료,8 ,matched_score,매칭점수,N,"DECIMAL(5,2)",,,,,,,
+FP,memo_recipe_ingredient,요리재료,9 ,created_at,생성,Y,DATETIME,8,,,,,,
+FP,memo_recipe_ingredient,요리재료,10 ,updated_at,수정,Y,DATETIME,8,,,,,,
+FP,payment,지불,1 ,payment_id,결제ID,Y,CHAR,36,PK,,,,,
+FP,payment,지불,2 ,order_id,주문ID,Y,CHAR,36,,FK,,,,
+FP,payment,지불,3 ,pg_tx_id,PG거래ID,N,VARCHAR,64,,,IDX,,,
+FP,payment,지불,4 ,points_used,사용포인트,Y,INT,,,,,,,이번 결제에 차감된 포인트
+FP,payment,지불,5 ,net_paid_amount,실결제할금액,Y,"DECIMAL(12,2)",,,,,,,카드·간편결제 등 실청구액
+FP,payment,지불,6 ,delivery_method,배송방식,N,ENUM,,,,,,,"QUICK, RO_ONDEMAND"
+FP,payment,지불,7 ,delivery_fee,배송료,Y,DECIMAL,"12,2",,,,,,기본 0
+FP,payment,지불,8 ,net_paid_amount,실결제금액,Y,DECIMAL,"12,2",,,,,,기본 0
+FP,payment,지불,9 ,payment_method,결제수단,Y,VARCHAR,20,,,,,,
+FP,payment,지불,10 ,status,결제상태,Y,ENUM,2,,,IDX,,,"AUTH,CAPTURED,CANCELLED,FAILED"
+FP,payment,지불,11 ,paid_amount,결제금액,Y,"DECIMAL(12,2)",13,,,,,,
+FP,payment,지불,12 ,approved_at,승인일시,Y,DATETIME,8,,,,,,
+FP,payment,지불,13 ,created_at,생성일,Y,DATETIME,8,,,,,,
